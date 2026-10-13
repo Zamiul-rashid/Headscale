@@ -12,7 +12,7 @@ fi
 
 hosts/make-ct.sh server1 "$CT_FW" campus-fw vmbr0 "$IP_FW/24" "$LAN_GW" 1 256 --nic2 "vmbr2,$ROOMB_GW/24" --task 3
 F() { ct_exec server1 "$CT_FW" "$*"; }
-F "export DEBIAN_FRONTEND=noninteractive; apt-get -qq update && apt-get -qq install -y nftables >/dev/null"
+F "export DEBIAN_FRONTEND=noninteractive; apt-get -qq update && apt-get -qq install -y nftables conntrack >/dev/null"
 F "echo net.ipv4.ip_forward=1 > /etc/sysctl.d/99-hs-sim.conf && sysctl -q -p /etc/sysctl.d/99-hs-sim.conf"
 F "mkdir -p /etc/nftables.d; test -f /etc/nftables.d/mode.nft || printf '# mode: open\n' > /etc/nftables.d/mode.nft"
 run_on server1 "cat > /tmp/hs-sim-nft.conf" < campus/nftables.conf

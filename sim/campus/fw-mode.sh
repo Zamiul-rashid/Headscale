@@ -14,5 +14,5 @@ case ${1:-} in
   *) die "usage: $0 open|udp-blocked|status" ;;
 esac
 [ "${1}" = status ] && exit 0
-ct_exec server1 "$CT_FW" "printf '# mode: $1\ntable inet hs_sim_fw {\n  chain mode {\n$rules\n  }\n}\n' > $F.tmp && mv $F.tmp $F && nft -f /etc/nftables.conf"
+ct_exec server1 "$CT_FW" "printf '# mode: $1\ntable inet hs_sim_fw {\n  chain mode {\n$rules\n  }\n}\n' > $F.tmp && mv $F.tmp $F && nft -f /etc/nftables.conf && conntrack -F 2>/dev/null"   # drop flows opened under the old mode
 log "campus-fw mode: $1"
