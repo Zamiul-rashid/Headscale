@@ -1,0 +1,6 @@
+src,dst,path,latency_ms
+alice-home,lab-b-01,derp:campus,30.000
+alice-home,lab-b-02,direct,27.000
+alice-home,alice-laptop,no-peer,
+alice-home,bob-enigma,no-peer,
+alice-home,admin-enigma,derp:campus,35.000

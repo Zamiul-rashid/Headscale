@@ -37,3 +37,11 @@
   in (ping seq 4–771). So during a long outage relayed sessions are effectively down even with the public DERP
   fallback. The success criterion "existing sessions keep working" should be scoped to direct paths, and the
   direct-path share (see connectivity) becomes a resilience metric, not only a performance one.
+
+## 2026-10-13 — simulated off-campus (Task 12)
+- strict (only the server's public 443/tcp + 3478/udp reachable, +30 ms home latency): alice-home reaches lab PCs
+  only via the campus DERP over 443, 27–37 ms; SSH (22) allowed, 9999 denied — ACLs hold off campus.
+- wg-allowed (campus accepts inbound WireGuard UDP): alice-home→lab-b-02 goes direct; lab-b-01 stays relayed
+  (shared-NAT port mapping, see connectivity notes). U6 decides which of these the real pilot gets.
+- alice-home cannot reach alice-laptop (same user): the proposal's policy has no own-devices rule
+  (e.g. `autogroup:self`), so a researcher's laptop and home PC can't talk to each other. Decide whether that is intended.

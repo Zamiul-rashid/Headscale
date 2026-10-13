@@ -39,7 +39,22 @@ services:
     profiles: [tmp]
     restart: "no"
     environment: {<<: *env, TS_HOSTNAME: hs-sim-tmp, TS_AUTHKEY: "${KEY_TMP:-}"}
+  hs-sim-alice-home:
+    # simulated off-campus device: its own network behind enigma's NAT, egress-filtered by
+    # clients/offcampus.sh (internet + the server's public ports only), public DNS, netem latency
+    <<: *ts
+    container_name: hs-sim-alice-home
+    profiles: [home]
+    dns: ["1.1.1.1"]
+    extra_hosts: ["hs.uni.home.arpa:192.168.1.201"]
+    networks: [home]
+    environment: {<<: *env, TS_HOSTNAME: alice-home, TS_ACCEPT_DNS: "false", TS_AUTHKEY: "${KEY_ALICE_HOME:-}"}
+    volumes: [alice-home-state:/var/lib/tailscale]
+networks:
+  home:
+    ipam: {config: [{subnet: 172.30.99.0/24}]}
 volumes:
+  alice-home-state: {}
   bob-state: {}
   admin-state: {}
   alice-state: {}

@@ -9,7 +9,7 @@ assert_fails H "nc -z -w 3 192.168.1.111 22"                    # LAN hosts unre
 assert_fails H "nc -z -w 3 $IP_CAMPUS 53"
 assert_ok    H "nc -z -w 3 $IP_HS 443"                           # the server's "public" port
 assert_ok    H "wget -q -T 10 -O /dev/null https://pkgs.tailscale.com"
-assert_ok    H "ping -c 3 1.1.1.1 | grep -qE 'time=([3-9][0-9]|[1-9][0-9]{2})'"   # netem adds ≥ 30 ms
+assert_ok    H "ping -c 5 1.1.1.1 | grep -qE 'time=([3-9][0-9]|[1-9][0-9]{2})'"   # netem adds ≥ 30 ms
 tgt=$(node_ip lab-b-01)
 assert_contains "$(H "tailscale ping --c 5 --until-direct=false --timeout 3s $tgt" 2>&1)" "via DERP(" "strict: relayed"
 assert_ok    H "nc -z -w 3 $tgt 22"                              # ACL still lets alice SSH
