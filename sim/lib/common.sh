@@ -51,10 +51,13 @@ hs() { ct_exec server1 "$CT_HS" "headscale $*"; }
 ledger_add() {
   local task=$1 host=$2 kind=$3 id=$4 undo=$5
   mkdir -p "$LEDGER_DIR"; touch "$LEDGER_DIR/ledger.tsv"
-  # re-creating something teardown already undid makes its row active again
-  if [ -f "$LEDGER_DIR/done.tsv" ]; then
+  # re-creating something teardown already undid: drop the old row (its undo may name an old
+  # archive/path and its position is stale) and the done marker, then append a fresh row below
+  if [ -f "$LEDGER_DIR/done.tsv" ] && grep -qxF "$task	$host	$kind	$id" "$LEDGER_DIR/done.tsv"; then
     grep -vxF "$task	$host	$kind	$id" "$LEDGER_DIR/done.tsv" > "$LEDGER_DIR/done.tsv.tmp" || true
     mv "$LEDGER_DIR/done.tsv.tmp" "$LEDGER_DIR/done.tsv"
+    awk -F'\t' -v t="$task" -v h="$host" -v k="$kind" -v i="$id" '!($2==t && $3==h && $4==k && $5==i)' \
+      "$LEDGER_DIR/ledger.tsv" > "$LEDGER_DIR/ledger.tsv.tmp" && mv "$LEDGER_DIR/ledger.tsv.tmp" "$LEDGER_DIR/ledger.tsv"
   fi
   awk -F'\t' -v t="$task" -v h="$host" -v k="$kind" -v i="$id" \
     '$2==t && $3==h && $4==k && $5==i {f=1} END {exit !f}' "$LEDGER_DIR/ledger.tsv" && return 0
@@ -64,4 +67,15 @@ ledger_add() {
 # grafana_has_dashboard <uid>: prints yes/no by reading CT 110's Grafana database read-only.
 grafana_has_dashboard() {
   ct_exec server1 "$CT_MON" "python3 -c \"import sqlite3,sys; c=sqlite3.connect('file:/opt/monitoring-stack/data/grafana/grafana.db?mode=ro', uri=True); print('yes' if c.execute('select 1 from dashboard where uid=?', ('$1',)).fetchone() else 'no')\""
+}
+
+# server0_mode <tailscale-status-json>: "native" only when server0 has no tailscale at all; any installed
+# tailscaled (running, stopped, logged out) belongs to the user's hosted tailnet and must not be re-pointed.
+server0_mode() { [ "$(jq -r '.BackendState // empty' <<<"$1")" = NotInstalled ] && echo native || echo docker; }
+
+# ledger_set_undo <task> <host> <kind> <id> <undo>: replace the undo command of an existing row in place.
+ledger_set_undo() {
+  awk -F'\t' -v OFS='\t' -v t="$1" -v h="$2" -v k="$3" -v i="$4" -v u="$5" \
+    '$2==t && $3==h && $4==k && $5==i {$6=u} {print}' "$LEDGER_DIR/ledger.tsv" > "$LEDGER_DIR/ledger.tsv.tmp" \
+    && mv "$LEDGER_DIR/ledger.tsv.tmp" "$LEDGER_DIR/ledger.tsv"
 }

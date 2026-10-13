@@ -25,7 +25,7 @@ if [ -z "$volid" ]; then
   volid=$(find_archive)
 fi
 [ -n "$volid" ] || die "could not find the protected vzdump archive"
-ledger_add 4 server1 vzdump "$volid" "pvesm set $volid --protected 0 && pvesm free $volid"
+ledger_add 4 server1 vzdump "$volid" "if pct config $CT_HS 2>/dev/null | grep -q '^tags:.*hs-sim' || ! pct config $CT_HS >/dev/null 2>&1; then echo 'CT $CT_HS is not the restored original; keeping $volid' >&2; exit 1; fi; pvesh set /nodes/$PVE1_NODE/storage/$BACKUP_STORAGE/content/$volid --protected 0 && pvesm free $volid"
 ledger_add 4 server1 ct-original "$CT_HS" "if pct status $CT_HS >/dev/null 2>&1; then pct stop $CT_HS >/dev/null 2>&1; pct destroy $CT_HS --purge; fi; pct restore $CT_HS $volid --storage local-lvm >/dev/null"
 run_on server1 "pct destroy $CT_HS"
 log "original CT $CT_HS archived as $volid (protected) and removed"

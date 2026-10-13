@@ -12,7 +12,7 @@ DASH=/opt/monitoring-stack/config/grafana/dashboards/hs-sim-headscale.json
 # Prometheus: back up, append our jobs, validate, hot-reload. Undo restores the exact original file.
 if ! M "grep -q 'hs-sim BEGIN' $PROM"; then
   ledger_add 5 server1 prometheus-config "$PROM" \
-    "pct exec $CT_MON -- bash -c 'cp -p $PROM.hs-sim.bak $PROM && rm -f $PROM.hs-sim.bak && curl -s -X POST localhost:9090/-/reload'"
+    "pct exec $CT_MON -- bash -c 'if [ -f $PROM.hs-sim.bak ]; then cp -p $PROM.hs-sim.bak $PROM && rm -f $PROM.hs-sim.bak; else sed -i \"/# --- hs-sim BEGIN/,/# --- hs-sim END ---/d\" $PROM; fi; curl -s -X POST localhost:9090/-/reload >/dev/null || true'"
   M "cp -p $PROM $PROM.hs-sim.bak"
   run_on server1 "cat > /tmp/hs-sim-job" < monitoring/prometheus-job.yml
   run_on server1 "pct exec $CT_MON -- bash -c 'cat >> $PROM' < /tmp/hs-sim-job && rm -f /tmp/hs-sim-job"

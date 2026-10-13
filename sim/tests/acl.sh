@@ -16,12 +16,15 @@ mkdir -p results; echo "src,dst,port,expect,got,pass" > results/acl.csv
 fail=0 skipped=0
 while IFS=$'\t' read -r src dst port expect <&3; do
   case $src in ''|\#*) continue ;; esac
-  if ! grep -qxF "$src" <<<"$online" || ! grep -qxF "$dst" <<<"$online"; then skipped=$((skipped+1)); continue; fi
+  if ! grep -qxF "$src" <<<"$online" || ! grep -qxF "$dst" <<<"$online"; then
+    skipped=$((skipped+1)); echo "$src,$dst,$port,$expect,skipped,skipped" >> results/acl.csv; continue
+  fi
   [ -n "${ip[$dst]:-}" ] || ip[$dst]=$(node_ip "$dst")
   if node_exec "$src" "nc -z -w 3 ${ip[$dst]} $port" >/dev/null 2>&1; then got=allow; else got=deny; fi
   [ "$got" = "$expect" ] && pass=yes || { pass=NO; fail=$((fail+1)); }
   echo "$src,$dst,$port,$expect,$got,$pass" >> results/acl.csv
 done 3< "$EXP"
-checked=$(( $(wc -l < results/acl.csv) - 1 ))
+checked=$(( $(wc -l < results/acl.csv) - 1 - skipped ))
 log "ACL: $((checked-fail))/$checked as expected, $skipped skipped (node not enrolled)"
+[ "$checked" -gt 0 ] || { log "no ACL row could be checked"; exit 1; }
 [ "$fail" -eq 0 ]

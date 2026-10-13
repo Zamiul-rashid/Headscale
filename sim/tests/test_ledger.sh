@@ -28,4 +28,15 @@ assert_eq "$(tail -1 "$T/order")" "3" "and gets undone again"
 : > "$LEDGER_DIR/done.tsv"
 assert_ok bash -c "set -euo pipefail; LEDGER_DIR=$LEDGER_DIR; . lib/common.sh; ledger_add 5 enigma file e true; echo reached" 
 assert_contains "$(cut -f2-5 "$LEDGER_DIR/ledger.tsv")" "5	enigma	file	e" "row added under set -e"
+# re-creating with a NEW undo (e.g. a new archive name) must replace the stale row and move it to the end
+./teardown.sh --task 3 >/dev/null
+ledger_add 3 enigma file d "echo 33 >> $T/order"
+assert_eq "$(tail -1 "$LEDGER_DIR/ledger.tsv" | cut -f6)" "echo 33 >> $T/order" "re-created row carries the new undo and is newest"
+assert_eq "$(awk -F'\t' '$2==3 && $5=="d"' "$LEDGER_DIR/ledger.tsv" | wc -l)" 1 "no duplicate row for the re-created resource"
+# --keep-access leaves task 0 (sudo/SSH access) rows for a separate final step
+ledger_add 0 enigma sudoers zz "echo 0 >> $T/order"
+out=$(./teardown.sh --dry-run --keep-access 2>&1)
+assert_eq "$(grep -c 'task 0' <<<"$out")" 0 "--keep-access skips task 0 rows"
+assert_ok test "$(grep -c UNDO <<<"$out")" -ge 1
+assert_eq "$(./teardown.sh --dry-run | grep -c 'task 0')" 1 "plain teardown includes task 0"
 t_done

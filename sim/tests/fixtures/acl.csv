@@ -12,6 +12,6 @@ a,b,9,allow,allow,yes
 a,b,10,allow,allow,yes
 a,b,11,allow,allow,yes
 a,b,12,allow,allow,yes
-a,b,13,allow,allow,yes
-a,b,14,allow,allow,yes
-a,b,15,allow,allow,yes
+x,lab-a-01,0,allow,skipped,skipped
+x,lab-a-01,1,allow,skipped,skipped
+x,lab-a-01,2,allow,skipped,skipped

@@ -59,8 +59,9 @@ Results are in `results/`; observations that matter for the real pilot are in
 
 ## Remove the simulation
 
-    ./teardown.sh --dry-run     # review what will be undone
-    ./teardown.sh               # undo everything, newest first
-    tests/test_pristine.sh      # compare every machine against ledger/baseline/
+    ./teardown.sh --dry-run                # review what will be undone
+    ./teardown.sh --keep-access            # undo everything except sudo/SSH access, newest first
+    tests/test_pristine.sh                 # compare every machine against ledger/baseline/
+    ./teardown.sh --task 0                 # finally remove the sudoers drop-ins and enigma's key on the laptop
 
 Rows of kind `manual` are printed, not executed; confirm those yourself.

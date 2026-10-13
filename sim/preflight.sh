@@ -17,8 +17,9 @@ run_on server1 true || die "cannot ssh to server1"
 run_on laptop true  || die "cannot ssh to laptop ($LAPTOP_SSH)"
 sudo -n true && run_on laptop "sudo -n true" || die "passwordless sudo missing: run SUDO_PW=... ./bootstrap-access.sh"
 
-for ip in "$IP_HS" "$IP_CAMPUS" "$IP_FW" "$IP_RESTORE"; do
-  mine "$ip" && continue
+sim_ct() { run_on server1 "pct config $1 2>/dev/null | grep -q '^tags:.*hs-sim'"; }   # CT exists and is ours
+for pair in "$IP_HS:$CT_HS" "$IP_CAMPUS:$CT_CAMPUS" "$IP_FW:$CT_FW" "$IP_RESTORE:$CT_RESTORE"; do
+  ip=${pair%%:*}; sim_ct "${pair#*:}" && continue
   run_on server1 "ping -c2 -W1 $ip >/dev/null 2>&1; ip neigh show $ip | grep -q lladdr" && die "IP $ip is already in use on the LAN"
 done
 for id in "$CT_CAMPUS" "$CT_FW" "$CT_LABB1" "$CT_LABB2" "$CT_RESTORE"; do
@@ -44,7 +45,7 @@ if [ -z "${SKIP_SERVER0:-}" ]; then
   snap server0-packages.txt   run_on server0 "dpkg-query -W"
   snap server0-ca-certs.txt   run_on server0 "ls -1 /usr/local/share/ca-certificates/; echo"
   snap server0-resolved.d.txt run_on server0 "ls -1 /etc/systemd/resolved.conf.d/ 2>/dev/null; echo"
-  [ -s config/server0-mode ] || { [ "$(jq -r .BackendState "$B/server0-tailscale.json")" = Running ] && echo docker || echo native; } > config/server0-mode
+  [ -s config/server0-mode ] || server0_mode "$(cat "$B/server0-tailscale.json")" > config/server0-mode
 else
   log "server0 deferred (SKIP_SERVER0=1): capture its baseline before Task 7"
 fi

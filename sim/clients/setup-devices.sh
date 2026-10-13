@@ -11,6 +11,7 @@ UNDO_PROJECT="DOCKER ps -aq --filter label=com.docker.compose.project=hs-sim | x
 
 # --- enigma ---
 ledger_add 6 enigma docker-project hs-sim "${UNDO_PROJECT//DOCKER/docker}"
+cp campus/root_ca.crt clients/enigma/root_ca.crt     # CT 802 issues a new root on every rebuild
 docker compose -f $D/compose.yaml --profile enigma build -q
 for svc in bob:bob admin:admin1; do
   IFS=: read -r name user <<<"$svc"
@@ -24,8 +25,12 @@ done
 
 # --- laptop: Docker (ledgered), then the same image via save/load ---
 if ! run_on laptop "command -v docker" >/dev/null; then
-  ledger_add 6 laptop package docker.io "sudo apt-get purge -y docker.io docker-compose-v2 containerd runc >/dev/null; sudo apt-get autoremove -y >/dev/null; sudo rm -rf /var/lib/docker /var/lib/containerd; sudo iptables -P FORWARD ACCEPT; sudo sysctl -qw net.ipv4.ip_forward=0"
+  before=$(run_on laptop "dpkg-query -W -f='\${Package}\n'" | sort)
+  ledger_add 6 laptop manual docker-leftovers "Reboot the laptop after teardown: Docker leaves its iptables chains and docker0 until reboot"
+  ledger_add 6 laptop package docker.io "echo pending >&2; exit 1"     # replaced below with the exact package list
   run_on laptop "sudo DEBIAN_FRONTEND=noninteractive apt-get -qq update && sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install -y docker.io docker-compose-v2 >/dev/null"
+  added=$(comm -13 <(echo "$before") <(run_on laptop "dpkg-query -W -f='\${Package}\n'" | sort) | tr '\n' ' ')
+  ledger_set_undo 6 laptop package docker.io "sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y $added >/dev/null && sudo rm -rf /var/lib/docker /var/lib/containerd && sudo iptables -P FORWARD ACCEPT && sudo sysctl -qw net.ipv4.ip_forward=0 && ! dpkg -s docker.io >/dev/null 2>&1"
 fi
 ledger_add 6 laptop docker-project hs-sim "rm -rf ~/hs-sim-clients; ${UNDO_PROJECT//DOCKER/sudo docker}"
 docker save "hs-sim-ts:$TS_VERSION" | run_on laptop "sudo docker load -q"

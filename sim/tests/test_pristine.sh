@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# After ./teardown.sh: every machine matches ledger/baseline/ and nothing named hs-sim is left.
-# Expected to FAIL while the simulation exists (it lists what is still there).
+# Run between `./teardown.sh --keep-access` and `./teardown.sh --task 0`: every machine matches
+# ledger/baseline/ and nothing named hs-sim is left. Expected to FAIL while the simulation exists.
 cd "$(dirname "$0")/.." || exit 1
 . tests/lib/assert.sh
 . lib/common.sh
@@ -29,23 +29,29 @@ assert_eq "$(docker volume ls -q --filter label=com.docker.compose.project=hs-si
 assert_eq "$(docker images -q 'hs-sim-ts' | wc -l)" 0 "no hs-sim image on enigma"
 assert_fails sudo -n iptables -S HS-SIM-HOME
 assert_fails test -e "$HOME/.config/systemd/user/hs-sim-collect.timer"
-assert_fails sudo -n true                                            # sudoers drop-in removed
 
-# laptop
+# laptop (fail loudly if it can't be reached: every check below would otherwise be meaningless)
+assert_ok run_on laptop true
 assert_eq "$(run_on laptop 'tailscale status --json' | ts)" "$(ts < $B/laptop-tailscale.json)" "laptop hosted tailnet unchanged"
 assert_eq "$(run_on laptop 'dpkg-query -W' | pkgs)" "$(pkgs < $B/laptop-packages.txt)" "laptop package set as before (docker removed)"
 assert_eq "$(run_on laptop 'ls -1 /usr/local/share/ca-certificates/; echo')" "$(cat $B/laptop-ca-certs.txt)" "laptop CA store as before"
 assert_fails run_on laptop "test -e ~/hs-sim-clients"
-assert_fails run_on laptop "sudo -n true"
+assert_eq "$(run_on laptop 'ls -1 /etc/systemd/resolved.conf.d/ 2>/dev/null; echo')" "$(cat $B/laptop-resolved.d.txt)" "laptop resolved.conf.d as before"
 
 # server0 (only once it has been part of the simulation)
+if [ -n "$SERVER0_SSH" ] && [ ! -e $B/server0-tailscale.json ]; then
+  assert_ok test -e $B/server0-tailscale.json            # server0 configured but never baselined: can't verify
+fi
 if [ -e $B/server0-tailscale.json ]; then
+  assert_ok run_on server0 true
   assert_eq "$(run_on server0 'tailscale status --json 2>/dev/null || echo {\"BackendState\":\"NotInstalled\"}' | ts)" "$(ts < $B/server0-tailscale.json)" "server0 tailscale as before"
   assert_eq "$(run_on server0 'dpkg-query -W' | pkgs)" "$(pkgs < $B/server0-packages.txt)" "server0 package set as before"
   assert_eq "$(run_on server0 'ls -1 /usr/local/share/ca-certificates/; echo')" "$(cat $B/server0-ca-certs.txt)" "server0 CA store as before"
+  assert_eq "$(run_on server0 'ls -1 /etc/systemd/resolved.conf.d/ 2>/dev/null; echo')" "$(cat $B/server0-resolved.d.txt)" "server0 resolved.conf.d as before"
 fi
 
-# ledger: everything undone except manual rows (printed for the user)
-assert_eq "$(awk -F'\t' '$4!="manual" {print $2"\t"$3"\t"$4"\t"$5}' ledger/ledger.tsv | sort -u | grep -vxFf ledger/done.tsv | wc -l)" 0 "every ledger row undone"
+# ledger: everything undone except task-0 access rows (next step) and manual rows (printed for the user)
+assert_eq "$(awk -F'\t' '$4!="manual" && $2!="0" {print $2"\t"$3"\t"$4"\t"$5}' ledger/ledger.tsv | sort -u | grep -vxFf ledger/done.tsv | wc -l)" 0 "every ledger row undone (except task-0 access)"
+echo "  NEXT: ./teardown.sh --task 0   (removes the sudoers drop-ins and enigma's SSH key on the laptop)"
 awk -F'\t' '$4=="manual" {print "  MANUAL (confirm yourself): " $6}' ledger/ledger.tsv
 t_done

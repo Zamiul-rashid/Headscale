@@ -11,7 +11,9 @@ exec_kind=$(awk -F'\t' -v n="$node" '$1==n {print $3}' config/nodes.tsv)
 S=sudo; [ "$exec_kind" = pct ] && S=
 if [ "$exec_kind" != pct ]; then
   target=$(awk -F'\t' -v n="$node" '$1==n {print $4}' config/nodes.tsv)
-  ledger_add "$task" "$target" systemd-units hs-sim-listen "sudo systemctl disable --now 'hs-sim-listen@*' hs-sim-iperf3 2>/dev/null; sudo rm -f /etc/systemd/system/hs-sim-listen@.service /etc/systemd/system/hs-sim-iperf3.service; sudo systemctl daemon-reload"
+  ledger_add "$task" "$target" systemd-units hs-sim-listen "sudo systemctl disable --now hs-sim-listen@3389 hs-sim-listen@8888 hs-sim-listen@9999 hs-sim-iperf3 2>/dev/null; sudo rm -f /etc/systemd/system/hs-sim-listen@.service /etc/systemd/system/hs-sim-iperf3.service; sudo systemctl daemon-reload"
+  missing=$(for p in socat iperf3 openssh-server; do node_exec "$node" "dpkg -s $p >/dev/null 2>&1" || echo $p; done | tr '\n' ' ')
+  [ -n "${missing// }" ] && ledger_add "$task" "$target" package "$missing" "sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y $missing >/dev/null"
 fi
 node_exec "$node" "export DEBIAN_FRONTEND=noninteractive
   command -v socat >/dev/null && command -v iperf3 >/dev/null || $S apt-get -qq install -y socat iperf3 openssh-server >/dev/null

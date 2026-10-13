@@ -10,7 +10,7 @@ exec_kind=$(awk -F'\t' -v n="$node" '$1==n {print $3}' config/nodes.tsv)
 S=sudo; [ "$exec_kind" = pct ] && S=
 if [ "$exec_kind" != pct ]; then
   target=$(awk -F'\t' -v n="$node" '$1==n {print $4}' config/nodes.tsv)
-  ledger_add "$task" "$target" package tailscale "sudo tailscale logout 2>/dev/null; sudo apt-get purge -y tailscale >/dev/null; sudo rm -f /etc/apt/sources.list.d/tailscale.list /usr/share/keyrings/tailscale-archive-keyring.gpg; sudo rm -rf /var/lib/tailscale"
+  ledger_add "$task" "$target" package tailscale "sudo tailscale logout 2>/dev/null; sudo apt-mark unhold tailscale >/dev/null; sudo DEBIAN_FRONTEND=noninteractive apt-get purge -y tailscale >/dev/null; sudo rm -f /etc/apt/sources.list.d/tailscale.list /usr/share/keyrings/tailscale-archive-keyring.gpg; sudo rm -rf /var/lib/tailscale; ! dpkg -s tailscale >/dev/null 2>&1"
 fi
 start=$(date +%s)
 # CT nodes: trust the sim root inside the CT (destroyed with it). Other hosts use clients/trust-ca.sh (ledgered).

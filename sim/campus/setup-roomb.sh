@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 N=/nodes/$PVE1_NODE/network
 
 if ! run_on server1 "ip link show vmbr2" >/dev/null 2>&1; then
-  ledger_add 3 server1 bridge vmbr2 "pvesh delete $N/vmbr2 && pvesh set $N"
+  ledger_add 3 server1 bridge vmbr2 "if pvesh get $N/vmbr2 >/dev/null 2>&1; then pvesh delete $N/vmbr2; fi; pvesh set $N"
   run_on server1 "pvesh create $N --iface vmbr2 --type bridge --autostart 1 --comments 'hs-sim lab room B (no uplink)' && pvesh set $N"
 fi
 
