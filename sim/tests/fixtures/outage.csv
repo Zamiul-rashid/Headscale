@@ -1,0 +1,3 @@
+case,metric,value,pass
+outage,direct-session-loss-pct,0,yes
+outage,relayed-session-loss-pct,34,recorded
