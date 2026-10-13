@@ -53,7 +53,7 @@ ledger_add() {
   mkdir -p "$LEDGER_DIR"; touch "$LEDGER_DIR/ledger.tsv"
   # re-creating something teardown already undid makes its row active again
   if [ -f "$LEDGER_DIR/done.tsv" ]; then
-    grep -vxF "$task	$host	$kind	$id" "$LEDGER_DIR/done.tsv" > "$LEDGER_DIR/done.tsv.tmp"
+    grep -vxF "$task	$host	$kind	$id" "$LEDGER_DIR/done.tsv" > "$LEDGER_DIR/done.tsv.tmp" || true
     mv "$LEDGER_DIR/done.tsv.tmp" "$LEDGER_DIR/done.tsv"
   fi
   awk -F'\t' -v t="$task" -v h="$host" -v k="$kind" -v i="$id" \

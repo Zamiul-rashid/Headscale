@@ -24,4 +24,8 @@ ledger_add 3 enigma file d "echo 3 >> $T/order"
 assert_eq "$(./teardown.sh --dry-run --task 3 | grep -c UNDO)" 1 "re-created resource is active again"
 ./teardown.sh --task 3 >/dev/null
 assert_eq "$(tail -1 "$T/order")" "3" "and gets undone again"
+# scripts run ledger_add under set -e; an empty done.tsv must not abort them
+: > "$LEDGER_DIR/done.tsv"
+assert_ok bash -c "set -euo pipefail; LEDGER_DIR=$LEDGER_DIR; . lib/common.sh; ledger_add 5 enigma file e true; echo reached" 
+assert_contains "$(cut -f2-5 "$LEDGER_DIR/ledger.tsv")" "5	enigma	file	e" "row added under set -e"
 t_done

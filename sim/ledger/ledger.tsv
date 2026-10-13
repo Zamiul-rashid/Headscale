@@ -2,3 +2,7 @@
 2026-10-13T13:55:47+06:00	0	laptop	sudoers	/etc/sudoers.d/hs-sim	sudo rm -f /etc/sudoers.d/hs-sim
 2026-10-13T13:55:47+06:00	0	laptop	authorized_key	enigma id_ed25519	sed -i '\#AAAAC3NzaC1lZDI1NTE5AAAAIGWuzzoE7P3+KY6/A3tzGPjKwH/YCikP1LOn40Y2ezev#d' ~/.ssh/authorized_keys
 2026-10-13T14:01:58+06:00	2	server1	ct	802	pct status 802 >/dev/null 2>&1 || exit 0; pct stop 802 >/dev/null 2>&1; pct destroy 802 --purge
+2026-10-13T14:05:28+06:00	3	server1	bridge	vmbr2	pvesh delete /nodes/proxmox/network/vmbr2 && pvesh set /nodes/proxmox/network
+2026-10-13T14:05:30+06:00	3	server1	ct	803	pct status 803 >/dev/null 2>&1 || exit 0; pct stop 803 >/dev/null 2>&1; pct destroy 803 --purge
+2026-10-13T14:06:23+06:00	3	server1	ct	804	pct status 804 >/dev/null 2>&1 || exit 0; pct stop 804 >/dev/null 2>&1; pct destroy 804 --purge
+2026-10-13T14:06:42+06:00	3	server1	ct	805	pct status 805 >/dev/null 2>&1 || exit 0; pct stop 805 >/dev/null 2>&1; pct destroy 805 --purge
