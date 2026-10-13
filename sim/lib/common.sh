@@ -60,3 +60,8 @@ ledger_add() {
     '$2==t && $3==h && $4==k && $5==i {f=1} END {exit !f}' "$LEDGER_DIR/ledger.tsv" && return 0
   printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -Is)" "$task" "$host" "$kind" "$id" "$undo" >> "$LEDGER_DIR/ledger.tsv"
 }
+
+# grafana_has_dashboard <uid>: prints yes/no by reading CT 110's Grafana database read-only.
+grafana_has_dashboard() {
+  ct_exec server1 "$CT_MON" "python3 -c \"import sqlite3,sys; c=sqlite3.connect('file:/opt/monitoring-stack/data/grafana/grafana.db?mode=ro', uri=True); print('yes' if c.execute('select 1 from dashboard where uid=?', ('$1',)).fetchone() else 'no')\""
+}

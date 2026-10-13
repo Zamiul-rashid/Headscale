@@ -1,0 +1,10 @@
+  # --- hs-sim BEGIN (headscale simulation; removed by teardown) ---
+  - job_name: 'hs-sim-headscale'
+    static_configs:
+      - targets: ['192.168.1.201:9090']
+        labels: {node: 'hs-sim', role: 'headscale'}
+  - job_name: 'hs-sim-node'
+    static_configs:
+      - targets: ['192.168.1.201:9100']
+        labels: {node: 'hs-sim', role: 'headscale-host'}
+  # --- hs-sim END ---
