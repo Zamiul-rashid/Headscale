@@ -46,6 +46,9 @@ Everything was re-checked by hand from scratch:
   enigma's key and the sudoers file removed; `FORWARD ACCEPT` and `ip_forward=0` as before; hosted
   tailnet identical to the baseline.
 
+- server0 (checked once its login was known): no Headscale process, unit or container; fail2ban shows
+  0 banned IPs; its hosted tailnet and its own DERP relay containers untouched.
+
 Three leftovers found and removed in this pass: the empty `docker` group on the laptop, Docker's build
 cache on enigma (192.5 MB, all from the client image build), and the stray `lab-headscale-pilot/ledger/`
 file.
@@ -53,6 +56,5 @@ file.
 ## Left for you
 
 - Optional: delete the three old OPNsense backups (see 01-environment.md).
-- If enigma is still banned from SSH on server0, unban 192.168.2.101 there.
 - The passwords shared in chat (`prova` and others) are used on several machines; consider changing them.
 - Harmless: enigma's `~/.ssh/known_hosts` gained entries for the laptop and the simulation CTs' IPs.

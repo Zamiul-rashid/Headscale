@@ -6,7 +6,7 @@
 |---|---|---|---|
 | enigma | Workstation, Ubuntu 26.04 | wired 192.168.2.101, Wi-Fi 192.168.3.x | Control machine; ran the bob, admin and "alice at home" clients in Docker |
 | server1 | Proxmox VE 9.2, 12 cores, 15 GB RAM | 192.168.1.112 | Hosted every server-side container |
-| server0 | Not Proxmox; serves 80/443 | 192.168.1.111 | Meant to be lab PC "lab-a-01". **Not used:** the login we were given was rejected |
+| server0 | Ubuntu 24.04 (user `mt10`); runs a standalone DERP relay (`derper` + `derp-relay` containers) on 80/443/3478 | 192.168.1.111 | Meant to be lab PC "lab-a-01". **Not used:** the right login only arrived after teardown |
 | laptop (`enigma-b`) | Ubuntu 22.04 | 192.168.1.199 (server VLAN) | Researcher "alice", in Docker |
 
 enigma, server1 and the laptop already run Tailscale on a hosted (tailscale.com) tailnet. That tailnet
@@ -34,5 +34,5 @@ Three old backups of it are still on `storage1tb` (about 1.7 GB); delete them if
 
 ## Side effect on server0
 
-Early login attempts from enigma tripped server0's SSH ban (fail2ban or similar). If enigma
-(192.168.2.101) still can't SSH to server0, unban it there.
+Early login attempts from enigma tripped server0's fail2ban SSH ban. It expired on its own: a check after
+teardown showed 0 banned IPs. server0 was never changed by the simulation, and has no Headscale on it.
