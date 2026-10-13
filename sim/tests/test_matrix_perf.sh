@@ -19,4 +19,5 @@ assert_eq "$(path "$O" alice-laptop bob-enigma)" no-peer "ACL hides researcher l
 if [ -n "$SERVER0_SSH" ]; then assert_eq "$(path "$O" alice-laptop lab-a-01)" direct "open: laptop->lab-a-01 direct"; fi
 assert_eq "$(head -1 results/perf-open.csv)" "pair,lan_mbps,ts_mbps,ratio,lan_ms,ts_ms,added_ms" "perf header"
 assert_ok sh -c "grep -qE '^same-room,[0-9.]+,[0-9.]+,[0-9.]+,' results/perf-open.csv"
+assert_ok sh -c "grep -qE '^laptop-roomb,NA,[0-9.]+,NA,NA,[0-9.]+,NA$' results/perf-open.csv"   # every pair whose nodes are online gets a row
 t_done

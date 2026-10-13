@@ -1,0 +1,14 @@
+src,dst,port,expect,got,pass
+bob-enigma,lab-b-01,22,allow,allow,yes
+bob-enigma,lab-b-01,3389,allow,allow,yes
+bob-enigma,lab-b-01,5900,allow,allow,yes
+bob-enigma,lab-b-01,8888,allow,allow,yes
+bob-enigma,lab-b-01,9999,deny,deny,yes
+alice-laptop,lab-b-02,22,allow,allow,yes
+alice-laptop,lab-b-02,9999,deny,deny,yes
+alice-laptop,bob-enigma,9999,deny,deny,yes
+bob-enigma,alice-laptop,9999,deny,deny,yes
+lab-b-01,alice-laptop,9999,deny,deny,yes
+lab-b-01,lab-b-02,9999,allow,allow,yes
+admin-enigma,lab-b-01,9999,allow,allow,yes
+admin-enigma,alice-laptop,9999,allow,allow,yes

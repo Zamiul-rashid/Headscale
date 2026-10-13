@@ -1,2 +1,3 @@
 pair,lan_mbps,ts_mbps,ratio,lan_ms,ts_ms,added_ms
-same-room,54137.9,4877.4,0.09,0.050,0.329,0.279
+same-room,53799.2,4848.8,0.09,0.051,0.319,0.268
+laptop-roomb,NA,322.3,NA,NA,3.852,NA

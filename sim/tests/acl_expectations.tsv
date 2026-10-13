@@ -1,0 +1,17 @@
+# src	dst	port	expect     (rows whose nodes are not enrolled are skipped and reported)
+bob-enigma	lab-b-01	22	allow
+bob-enigma	lab-b-01	3389	allow
+bob-enigma	lab-b-01	5900	allow
+bob-enigma	lab-b-01	8888	allow
+bob-enigma	lab-b-01	9999	deny
+alice-laptop	lab-a-01	22	allow
+alice-laptop	lab-a-01	9999	deny
+alice-laptop	lab-b-02	22	allow
+alice-laptop	lab-b-02	9999	deny
+alice-laptop	bob-enigma	9999	deny
+bob-enigma	alice-laptop	9999	deny
+lab-b-01	alice-laptop	9999	deny
+lab-b-01	lab-b-02	9999	allow
+lab-a-01	lab-b-02	22	allow
+admin-enigma	lab-b-01	9999	allow
+admin-enigma	alice-laptop	9999	allow

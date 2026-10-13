@@ -17,5 +17,6 @@ assert_contains "$(jq -c '(. // [])[] | select(.given_name=="lab-b-02") | (.tags
 assert_contains "$(jq -c '(. // [])[] | select(.given_name=="lab-b-01") | (.tags // [])' <<<"$J")" "tag:labpc" "lab-b-01 has tag:labpc"
 assert_eq "$(awk -F, '/^lab-/{s+=$2;n++} END{print (n>0 && s/n<=600)?"ok":"slow-or-none"}' results/enrolment.csv)" ok "mean lab enrolment <= 10 min"
 assert_eq "$(node_exec alice-laptop 'dig +short lab-b-01.lab.internal' | head -1)" "$(node_ip lab-b-01)" "MagicDNS from alice"
-for p in 22 3389 5900 8888 9999 5201; do assert_ok ct_exec server1 "$CT_LABB1" "ss -ltn | grep -q ':$p '"; done
+assert_contains "$(ct_exec server1 "$CT_LABB1" "ss -ltnp | grep :5900")" "iperf3" "iperf3 serves the VNC slot (5900) so researchers can run perf within the ACL"
+for p in 22 3389 5900 8888 9999; do assert_ok ct_exec server1 "$CT_LABB1" "ss -ltn | grep -q ':$p '"; done
 t_done
