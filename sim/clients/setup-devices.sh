@@ -7,10 +7,10 @@ cd "$(dirname "$0")/.."
 headscale/users.sh
 D=clients/enigma
 export TS_VERSION
-UNDO_PROJECT="docker ps -aq --filter label=com.docker.compose.project=hs-sim | xargs -r SUDO docker rm -f; docker volume ls -q --filter label=com.docker.compose.project=hs-sim | xargs -r SUDO docker volume rm; docker network ls -q --filter label=com.docker.compose.project=hs-sim | xargs -r SUDO docker network rm; SUDO docker image rm -f hs-sim-ts:$TS_VERSION >/dev/null 2>&1; true"
+UNDO_PROJECT="DOCKER ps -aq --filter label=com.docker.compose.project=hs-sim | xargs -r DOCKER rm -f; DOCKER volume ls -q --filter label=com.docker.compose.project=hs-sim | xargs -r DOCKER volume rm; DOCKER network ls -q --filter label=com.docker.compose.project=hs-sim | xargs -r DOCKER network rm; DOCKER image rm -f hs-sim-ts:$TS_VERSION >/dev/null 2>&1; DOCKER image rm tailscale/tailscale:v$TS_VERSION >/dev/null 2>&1; true"
 
 # --- enigma ---
-ledger_add 6 enigma docker-project hs-sim "${UNDO_PROJECT//SUDO /}"
+ledger_add 6 enigma docker-project hs-sim "${UNDO_PROJECT//DOCKER/docker}"
 docker compose -f $D/compose.yaml --profile enigma build -q
 for svc in bob:bob admin:admin1; do
   IFS=: read -r name user <<<"$svc"
@@ -27,7 +27,7 @@ if ! run_on laptop "command -v docker" >/dev/null; then
   ledger_add 6 laptop package docker.io "sudo apt-get purge -y docker.io docker-compose-v2 containerd runc >/dev/null; sudo apt-get autoremove -y >/dev/null; sudo rm -rf /var/lib/docker /var/lib/containerd; sudo iptables -P FORWARD ACCEPT; sudo sysctl -qw net.ipv4.ip_forward=0"
   run_on laptop "sudo DEBIAN_FRONTEND=noninteractive apt-get -qq update && sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install -y docker.io docker-compose-v2 >/dev/null"
 fi
-ledger_add 6 laptop docker-project hs-sim "rm -rf ~/hs-sim-clients; ${UNDO_PROJECT//SUDO/sudo}"
+ledger_add 6 laptop docker-project hs-sim "rm -rf ~/hs-sim-clients; ${UNDO_PROJECT//DOCKER/sudo docker}"
 docker save "hs-sim-ts:$TS_VERSION" | run_on laptop "sudo docker load -q"
 tar -C $D -cf - compose.yaml | run_on laptop "mkdir -p ~/hs-sim-clients && tar -C ~/hs-sim-clients -xf -"
 if ! run_on laptop "sudo docker ps -q --filter name=^hs-sim-alice\$" | grep -q .; then
