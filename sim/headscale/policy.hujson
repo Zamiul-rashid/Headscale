@@ -1,0 +1,31 @@
+// Headscale v0.29.3 policy. HuJSON: comments and trailing commas are allowed.
+// User references need a trailing "@" (admin1@ -> Headscale user "admin1").
+{
+  "groups": {
+    "group:admins": ["admin1@"],
+    "group:researchers": ["alice@", "bob@"],
+  },
+
+  // Who may self-assign tags with `tailscale up --advertise-tags` (web/OIDC registration).
+  // NOT checked for tags baked into a preauthkey created via the CLI.
+  "tagOwners": {
+    "tag:labpc": ["group:admins"],
+    "tag:gpu": ["group:admins"],
+  },
+
+  "acls": [
+    // Admins reach everything in the tailnet (v0.29: "*" = 100.64.0.0/10 + fd7a:115c:a1e0::/48).
+    { "action": "accept", "src": ["group:admins"], "dst": ["*:*"] },
+
+    // Researchers reach lab PCs: SSH, RDP, VNC, Jupyter.
+    {
+      "action": "accept",
+      "src": ["group:researchers"],
+      "dst": ["tag:labpc:22,3389,5900,8888"],
+    },
+
+    // Lab PCs talk to each other freely.
+    { "action": "accept", "src": ["tag:labpc"], "dst": ["tag:labpc:*"] },
+  ],
+}
+

@@ -1,0 +1,13 @@
+arch: amd64
+cores: 2
+features: nesting=1,keyctl=1
+hostname: headscale-lxc
+memory: 1024
+net0: name=eth0,bridge=vmbr0,hwaddr=BC:24:11:5C:48:C8,ip=dhcp,type=veth
+onboot: 0
+ostype: ubuntu
+rootfs: local-lvm:vm-101-disk-0,size=16G
+swap: 512
+unprivileged: 1
+lxc.cgroup2.devices.allow: c 10:200 rwm
+lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
