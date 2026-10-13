@@ -19,7 +19,8 @@ assert_eq "$(run_on server1 'pvesh get /cluster/backup --output-format json' | j
 assert_eq "$(ct_exec server1 "$CT_MON" 'sha256sum /opt/monitoring-stack/config/prometheus/prometheus.yml')" "$(cat $B/ct110-prometheus.sha256)" "prometheus.yml byte-identical"
 assert_eq "$(grafana_has_dashboard hs-sim)" no "grafana dashboard removed"
 assert_fails run_on server1 "test -e /mnt/$BACKUP_STORAGE/hs-sim-backup"
-archive_exists() { run_on server1 "pvesm path $1" >/dev/null 2>&1; }
+# `pvesm path` only computes a path from the name, so ask the storage what it actually holds
+archive_exists() { run_on server1 "pvesh get /nodes/$PVE1_NODE/storage/$BACKUP_STORAGE/content --content backup --output-format json" | jq -e --arg v "$1" 'any(.[]; .volid == $v)' >/dev/null; }
 for v in $(awk -F'\t' '$4=="vzdump" {print $5}' ledger/ledger.tsv); do assert_fails archive_exists "$v"; done
 
 # enigma

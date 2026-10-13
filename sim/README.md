@@ -1,5 +1,7 @@
 # hs-sim — Headscale pilot rehearsal on the home lab
 
+> **Torn down on 2026-10-13.** The record of what was built, measured and removed is in `../records/`.
+
 A reversible simulation of the lab Headscale pilot (`../README.md`), built from
 `../docs/superpowers/plans/2026-10-13-headscale-home-sim.md`.
 
