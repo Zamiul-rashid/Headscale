@@ -13,13 +13,15 @@ if [ "$exec_kind" != pct ]; then
   ledger_add "$task" "$target" package tailscale "sudo tailscale logout 2>/dev/null; sudo apt-get purge -y tailscale >/dev/null; sudo rm -f /etc/apt/sources.list.d/tailscale.list /usr/share/keyrings/tailscale-archive-keyring.gpg; sudo rm -rf /var/lib/tailscale"
 fi
 start=$(date +%s)
+# CT nodes: trust the sim root inside the CT (destroyed with it). Other hosts use clients/trust-ca.sh (ledgered).
+[ "$exec_kind" = pct ] && node_exec "$node" "cat > /usr/local/share/ca-certificates/hs-sim-root.crt && update-ca-certificates >/dev/null" < campus/root_ca.crt
 node_exec "$node" "export DEBIAN_FRONTEND=noninteractive
   . /etc/os-release
   $S curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/\$VERSION_CODENAME.noarmor.gpg | $S tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
   echo \"deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu \$VERSION_CODENAME main\" | $S tee /etc/apt/sources.list.d/tailscale.list >/dev/null
   $S apt-get -qq update && $S apt-get -qq install -y --allow-change-held-packages tailscale=$TS_VERSION >/dev/null && $S apt-mark hold tailscale >/dev/null
-  $S systemctl enable -q --now tailscaled
-  $S tailscale up --login-server https://$HS_FQDN --authkey $key --hostname $node --accept-dns=true"
+  $S systemctl enable -q tailscaled && $S systemctl restart tailscaled
+  $S tailscale up --login-server https://$HS_FQDN --authkey $key --hostname $node --accept-dns=true --timeout 120s"
 for _ in $(seq 30); do
   [ "$(node_exec "$node" "tailscale status --json" | jq -r .BackendState)" = Running ] && break; sleep 2
 done
