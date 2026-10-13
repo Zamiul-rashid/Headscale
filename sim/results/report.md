@@ -2,21 +2,27 @@
 
 | Metric | Target | Measured | Result |
 |---|---|---|---|
-| Nodes online (last soak sample) | all | 5/5 | PASS |
+| Nodes online (last soak sample) | all | 6/6 | PASS |
 | Mean enrolment time per lab PC | ≤ 600 s | 11 s | PASS |
+| Soak coverage | ≥ 151 h, gaps ≤ 2 h | 5 samples over 3 h, longest gap 1.0 h | FAIL |
 | Uptime (control server health checks) | ≥ 99 % | 100.0 % | PASS |
 | TLS certificate valid in every sample | 0 expired | 0 expired | PASS |
 | Hosted tailnets untouched (enigma) | every sample | 0 changed | PASS |
-| Direct (non-relayed) peer pairs, open mode | ≥ 80 % | 44 % | FAIL |
-| Added latency, tailnet vs LAN (worst pair) | ≤ 5 ms | 0.268 ms | PASS |
-| Throughput, tailnet / LAN (worst pair) | ≥ 0.70 | 0.09 | FAIL |
-| ACL tests passed | 100 % | 100 % | PASS |
+| Direct (non-relayed) peer pairs, open mode | ≥ 80 % | 58 % | FAIL |
+| Added latency, tailnet vs LAN (worst pair) | ≤ 5 ms | — ms | NO DATA |
+| Throughput, tailnet / LAN (worst pair) | ≥ 0.70 | — | NO DATA |
+| ACL tests passed | 100 % | 100 % (3 skipped) | PASS |
 | Revocation time (worst case) | ≤ 60 s | 5 s | PASS |
 | Backup restore RTO | ≤ 7200 s | 63 s | PASS |
 | User satisfaction (survey) | ≥ 4.0 | N/A (not simulated) | N/A |
 | Security incidents | 0 | 0 | PASS |
 
 ## Flagged soak samples
+
+## Informational: same-room pair (not graded)
+
+Two CTs on one Proxmox bridge compare a memory copy with WireGuard, so it is not a LAN baseline:
+same-room: LAN 56513.9 Mbit/s, tailnet 5030.9 Mbit/s, added latency 0.275 ms
 
 ## Control-plane outage and reboot
 
@@ -78,3 +84,11 @@
   in (ping seq 4–771). So during a long outage relayed sessions are effectively down even with the public DERP
   fallback. The success criterion "existing sessions keep working" should be scoped to direct paths, and the
   direct-path share (see connectivity) becomes a resilience metric, not only a performance one.
+
+## 2026-10-13 — simulated off-campus (Task 12)
+- strict (only the server's public 443/tcp + 3478/udp reachable, +30 ms home latency): alice-home reaches lab PCs
+  only via the campus DERP over 443, 27–37 ms; SSH (22) allowed, 9999 denied — ACLs hold off campus.
+- wg-allowed (campus accepts inbound WireGuard UDP): alice-home→lab-b-02 goes direct; lab-b-01 stays relayed
+  (shared-NAT port mapping, see connectivity notes). U6 decides which of these the real pilot gets.
+- alice-home cannot reach alice-laptop (same user): the proposal's policy has no own-devices rule
+  (e.g. `autogroup:self`), so a researcher's laptop and home PC can't talk to each other. Decide whether that is intended.
