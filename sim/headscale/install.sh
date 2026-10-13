@@ -24,8 +24,11 @@ push headscale/policy.hujson /etc/headscale/policy.hujson
 C "chown root:headscale /etc/headscale/*.yaml /etc/headscale/*.hujson && chmod 640 /etc/headscale/*.yaml /etc/headscale/*.hujson"
 
 if [ -n "$restore" ]; then
+  # the backup directory from Task 5, read-only, at the same path the original server used
+  run_on server1 "pct config $vmid | grep -q '^mp0:' || pct set $vmid -mp0 /mnt/$BACKUP_STORAGE/hs-sim-backup,mp=/backup,ro=1"
+  C "test -d $restore" || { run_on server1 "pct reboot $vmid"; for _ in $(seq 30); do C "test -d $restore" 2>/dev/null && break; sleep 2; done; }
   push secrets/restic.pass /root/.restic-pass "--perms 600"
-  C "systemctl stop headscale 2>/dev/null; restic -r $restore --password-file /root/.restic-pass restore latest --target / --include /var/backups/headscale --include /var/lib/headscale --include /etc/headscale >/dev/null \
+  C "systemctl stop headscale 2>/dev/null; restic -r $restore --password-file /root/.restic-pass --no-lock restore latest --target / --include /var/backups/headscale --include /var/lib/headscale --include /etc/headscale >/dev/null \
      && cp /var/backups/headscale/db.sqlite /var/lib/headscale/db.sqlite && rm -f /var/lib/headscale/db.sqlite-wal /var/lib/headscale/db.sqlite-shm \
      && chown -R headscale:headscale /var/lib/headscale"
 fi

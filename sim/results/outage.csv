@@ -1,0 +1,9 @@
+case,metric,value,pass
+setup,direct-pair-path,10.20.0.12:41641,recorded
+setup,relayed-pair-path,DERP(sin),recorded
+outage,new-enrolment-blocked,NeedsLogin,yes
+recovery,enrolment-after-restart,ok,yes
+outage,direct-session-loss-pct,0,yes
+outage,relayed-session-loss-pct,91.8831,recorded
+reboot,health-seconds,5,yes
+reboot,nodes-online,5/5,yes

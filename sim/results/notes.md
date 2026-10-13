@@ -16,3 +16,24 @@
 - same-room pair (lab-b-01→lab-b-02) compares a Proxmox in-memory bridge (~54 Gbit/s) with WireGuard (~4.9 Gbit/s):
   ratio 0.09 is a CPU/bridge artifact, not a LAN comparison. The meaningful "≥ 70 % of LAN" pairs are
   cross-subnet (bob-enigma→lab-a-01) and laptop (alice-laptop→lab-a-01) over physical 1 GbE, pending lab-a-01.
+
+## 2026-10-13 — control-plane outage (Task 10)
+- Existing **direct** sessions survive a Headscale outage with 0 % loss (proposal claim holds).
+- Existing **relayed** sessions do NOT simply survive: the campus DERP is embedded in Headscale, so stopping
+  Headscale also stops the relay. In the first 2-minute run, bob→lab-b-01 (relayed via campus DERP) lost
+  ~62 s of traffic (ping seq 4–34), then recovered through Tailscale's *public* DERP at 100–130 ms.
+  If IT removes the public DERP fallback (U6), relayed sessions stay down for the whole outage.
+  Recommendation for the real pilot: run the campus DERP as a separate `derper` service (or on a second host)
+  so a Headscale restart/upgrade does not cut relayed traffic.
+- Clients do pick public DERP regions: before the 30-minute run the relayed pair was going through
+  **DERP(sin)** (Singapore). With the public fallback enabled, campus-to-campus relayed traffic can leave the
+  country (encrypted, but latency + data-residency question for IT, U6).
+- New enrolment during the outage fails cleanly (NeedsLogin / container exits) and succeeds after restart.
+- Server reboot: health back in ~5 s, all nodes online again.
+- DR drill: replacement CT built from the nightly restic backup, DNS repointed, all 5 nodes reconnected —
+  RTO 63 s from scratch (target ≤ 2 h). Restore must use `restic --no-lock` against a read-only repo.
+- **30-minute outage (proposal duration):** direct pair lab-b-01→lab-b-02 lost 0 %. Relayed pair bob→lab-b-01,
+  which was on public DERP(sin) at the start, lost 91.9 %: no replies from seconds after the stop until ~26 min
+  in (ping seq 4–771). So during a long outage relayed sessions are effectively down even with the public DERP
+  fallback. The success criterion "existing sessions keep working" should be scoped to direct paths, and the
+  direct-path share (see connectivity) becomes a resilience metric, not only a performance one.
