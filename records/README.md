@@ -4,8 +4,8 @@ On 2026-10-13 we rehearsed the 15-PC lab Headscale pilot (see `../README.md`) on
 ran its tests, and then removed everything. This folder is the written record of that run.
 
 **Status:** torn down on 2026-10-13. Every machine was checked against its pre-simulation state
-(21/21 checks passed). One manual step remains: **reboot the laptop** to clear Docker's leftover
-iptables chains.
+(21/21 checks passed), then re-checked by hand. Nothing from the simulation is left, and Headscale
+is not running anywhere: your original CT 101 is stopped and does not start at boot.
 
 ## Contents
 

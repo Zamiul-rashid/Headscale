@@ -30,12 +30,29 @@ Command sequence:
 
 After the last step, sudo asks for a password again on both machines, and the laptop rejects enigma's key.
 
+## Second check (same day, after teardown)
+
+Everything was re-checked by hand from scratch:
+
+- server1: containers and VMs as before; CT 101 config identical to the pre-simulation copy, stopped,
+  `onboot: 0`; no `vmbr2` (neither live nor in the interfaces files); backup job `101,102,110,120`;
+  no backup folder or simulation archive; no `hs-sim` anywhere in `/etc/pve` or `/tmp`;
+  `prometheus.yml` hash identical to the baseline; no dashboard file or Grafana database entry.
+- **Headscale is not running anywhere:** not on the server1 host and not in any running CT. The only
+  Headscale install is your original CT 101, which is stopped and does not start at boot (`onboot: 0`).
+- enigma: no `hs-sim` containers, volumes, networks, images or firewall chains; no timer; sudo asks
+  for a password again; hosted tailnet identical to the baseline (same IP).
+- laptop: no Docker packages, data, `docker0` or Docker iptables chains (so no reboot is needed);
+  enigma's key and the sudoers file removed; `FORWARD ACCEPT` and `ip_forward=0` as before; hosted
+  tailnet identical to the baseline.
+
+Three leftovers found and removed in this pass: the empty `docker` group on the laptop, Docker's build
+cache on enigma (192.5 MB, all from the client image build), and the stray `lab-headscale-pilot/ledger/`
+file.
+
 ## Left for you
 
-- **Reboot the laptop.** Docker leaves its iptables chains and `docker0` interface until the next reboot.
 - Optional: delete the three old OPNsense backups (see 01-environment.md).
-- Optional: delete the stray file `lab-headscale-pilot/ledger/ledger.tsv`. A helper was accidentally run
-  from the wrong directory and created it; nothing uses it.
-- Optional: Docker's build cache on enigma still holds the client image layers (`docker builder prune`).
 - If enigma is still banned from SSH on server0, unban 192.168.2.101 there.
 - The passwords shared in chat (`prova` and others) are used on several machines; consider changing them.
+- Harmless: enigma's `~/.ssh/known_hosts` gained entries for the laptop and the simulation CTs' IPs.
