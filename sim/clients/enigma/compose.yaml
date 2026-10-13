@@ -1,0 +1,45 @@
+# hs-sim Tailscale clients. Each runs its own tailscaled in its own network namespace, so the
+# host's tailscaled (hosted tailnet) is never touched.  Profiles: enigma, laptop, tmp, home.
+name: hs-sim
+x-ts: &ts
+  image: hs-sim-ts:${TS_VERSION:?}
+  build: {context: ., args: {TS_VERSION: "${TS_VERSION}"}}
+  cap_add: [NET_ADMIN, NET_RAW]
+  devices: ["/dev/net/tun:/dev/net/tun"]
+  dns: ["192.168.1.202"]
+  restart: unless-stopped
+x-env: &env
+  TS_USERSPACE: "false"
+  TS_STATE_DIR: /var/lib/tailscale
+  TS_AUTH_ONCE: "true"
+  TS_ACCEPT_DNS: "true"
+  TS_EXTRA_ARGS: --login-server=https://hs.uni.home.arpa
+services:
+  hs-sim-bob:
+    <<: *ts
+    container_name: hs-sim-bob
+    profiles: [enigma]
+    environment: {<<: *env, TS_HOSTNAME: bob-enigma, TS_AUTHKEY: "${KEY_BOB:-}"}
+    volumes: [bob-state:/var/lib/tailscale]
+  hs-sim-admin:
+    <<: *ts
+    container_name: hs-sim-admin
+    profiles: [enigma]
+    environment: {<<: *env, TS_HOSTNAME: admin-enigma, TS_AUTHKEY: "${KEY_ADMIN:-}"}
+    volumes: [admin-state:/var/lib/tailscale]
+  hs-sim-alice:
+    <<: *ts
+    container_name: hs-sim-alice
+    profiles: [laptop]
+    environment: {<<: *env, TS_HOSTNAME: alice-laptop, TS_AUTHKEY: "${KEY_ALICE:-}"}
+    volumes: [alice-state:/var/lib/tailscale]
+  hs-sim-tmp:
+    <<: *ts
+    container_name: hs-sim-tmp
+    profiles: [tmp]
+    restart: "no"
+    environment: {<<: *env, TS_HOSTNAME: hs-sim-tmp, TS_AUTHKEY: "${KEY_TMP:-}"}
+volumes:
+  bob-state: {}
+  admin-state: {}
+  alice-state: {}
