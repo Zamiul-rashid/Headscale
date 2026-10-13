@@ -1,3 +1,4 @@
 2026-10-13T13:55:37+06:00	0	enigma	sudoers	/etc/sudoers.d/hs-sim	sudo rm -f /etc/sudoers.d/hs-sim
 2026-10-13T13:55:47+06:00	0	laptop	sudoers	/etc/sudoers.d/hs-sim	sudo rm -f /etc/sudoers.d/hs-sim
 2026-10-13T13:55:47+06:00	0	laptop	authorized_key	enigma id_ed25519	sed -i '\#AAAAC3NzaC1lZDI1NTE5AAAAIGWuzzoE7P3+KY6/A3tzGPjKwH/YCikP1LOn40Y2ezev#d' ~/.ssh/authorized_keys
+2026-10-13T14:01:58+06:00	2	server1	ct	802	pct status 802 >/dev/null 2>&1 || exit 0; pct stop 802 >/dev/null 2>&1; pct destroy 802 --purge

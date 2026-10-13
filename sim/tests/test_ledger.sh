@@ -19,4 +19,9 @@ assert_fails ./teardown.sh
 assert_eq "$(tr '\n' ' ' < "$T/order")" "3 2 1 " "re-run only retries the failed row"
 ledger_add 4 enigma manual router "Remove port-forward X"
 assert_contains "$(./teardown.sh --task 4)" "MANUAL" "manual rows are printed, not run"
+# a resource re-created after its undo ran must be undone again by the next teardown
+ledger_add 3 enigma file d "echo 3 >> $T/order"
+assert_eq "$(./teardown.sh --dry-run --task 3 | grep -c UNDO)" 1 "re-created resource is active again"
+./teardown.sh --task 3 >/dev/null
+assert_eq "$(tail -1 "$T/order")" "3" "and gets undone again"
 t_done

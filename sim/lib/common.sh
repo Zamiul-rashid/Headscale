@@ -51,6 +51,11 @@ hs() { ct_exec server1 "$CT_HS" "headscale $*"; }
 ledger_add() {
   local task=$1 host=$2 kind=$3 id=$4 undo=$5
   mkdir -p "$LEDGER_DIR"; touch "$LEDGER_DIR/ledger.tsv"
+  # re-creating something teardown already undid makes its row active again
+  if [ -f "$LEDGER_DIR/done.tsv" ]; then
+    grep -vxF "$task	$host	$kind	$id" "$LEDGER_DIR/done.tsv" > "$LEDGER_DIR/done.tsv.tmp"
+    mv "$LEDGER_DIR/done.tsv.tmp" "$LEDGER_DIR/done.tsv"
+  fi
   awk -F'\t' -v t="$task" -v h="$host" -v k="$kind" -v i="$id" \
     '$2==t && $3==h && $4==k && $5==i {f=1} END {exit !f}' "$LEDGER_DIR/ledger.tsv" && return 0
   printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -Is)" "$task" "$host" "$kind" "$id" "$undo" >> "$LEDGER_DIR/ledger.tsv"
