@@ -1,0 +1,48 @@
+# Headplane 0.8.1 for hs.zamiulrashid.online (installed 2026-10-17).
+# Public at https://hs.zamiulrashid.online/admin via NPM host 28 (owner's decision 2026-10-17).
+server:
+  host: "0.0.0.0"
+  port: 3000
+  base_url: "https://hs.zamiulrashid.online"
+  cookie_secret_path: "/etc/headplane/cookie_secret"
+  cookie_secure: true
+  cookie_max_age: 86400
+  data_path: "/var/lib/headplane"
+
+headscale:
+  url: "http://127.0.0.1:8080"
+  public_url: "https://hs.zamiulrashid.online"
+  # Mounted read-only: Headplane shows the settings but cannot change them.
+  config_path: "/etc/headscale/config.yaml"
+  # Needed for Google sign-in (Headplane talks to Headscale as this key). Expires ~2027-01-15.
+  api_key_path: "/etc/headplane/headscale_api_key"
+
+# Google sign-in, same Google client as Headscale (project "lab-headscale").
+# Headplane does not filter domains: the FIRST person to sign in becomes Owner,
+# everyone after gets "member" (no access) until an owner/admin promotes them.
+oidc:
+  issuer: "https://accounts.google.com"
+  client_id: "537746855782-f2emc592psev5oqk3sjrjo3m4lrcjfg4.apps.googleusercontent.com"
+  client_secret_path: "/etc/headplane/oidc_client_secret"
+  scope: "openid email profile"
+  use_pkce: true
+  default_role: "member"
+
+integration:
+  # No docker/kubernetes/proc integration: Headscale runs natively under systemd
+  # and its config is read-only here, so Headplane never restarts it.
+  agent:
+    enabled: false
+services:
+  headplane:
+    image: ghcr.io/tale/headplane:0.8.1
+    container_name: headplane
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./config.yaml:/etc/headplane/config.yaml:ro
+      - ./cookie_secret:/etc/headplane/cookie_secret:ro
+      - ./headscale_api_key:/etc/headplane/headscale_api_key:ro
+      - ./oidc_client_secret:/etc/headplane/oidc_client_secret:ro
+      - /etc/headscale/config.yaml:/etc/headscale/config.yaml:ro
+      - ./data:/var/lib/headplane
