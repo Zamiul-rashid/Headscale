@@ -30,6 +30,13 @@ def client(tmp_path, seeded=True):
     return TestClient(app), db, sheet
 
 
+def test_healthz_reports_the_running_version(tmp_path):
+    from importlib.metadata import version
+    c, _, _ = client(tmp_path)
+    r = c.get("/slots/healthz")
+    assert r.status_code == 200 and r.json()["version"] == version("labslots")
+
+
 def test_requires_admin(tmp_path):
     c, _, _ = client(tmp_path)
     r = c.get("/slots/calendar", follow_redirects=False)

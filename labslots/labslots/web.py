@@ -8,6 +8,7 @@ import re
 import secrets
 import threading
 from datetime import date, datetime, timedelta
+from importlib.metadata import version
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -791,7 +792,8 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
 
     @r.get("/healthz")
     async def healthz():
-        return {"ok": True, "servers": {r_["name"]: r_["last_seen"] for r_ in reports(db, clock())},
+        return {"ok": True, "version": version("labslots"),
+                "servers": {r_["name"]: r_["last_seen"] for r_ in reports(db, clock())},
                 **({"sheet_last_ok": db.setting("sheet_last_ok"), "sheet_error": db.setting("sheet_error")}
                    if sync else {})}
 
