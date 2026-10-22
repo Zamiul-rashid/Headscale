@@ -1,0 +1,13 @@
+key,value
+server side,stress CT 190 on server1: 4 cores; 4096 MB
+headscale,v0.29.3
+tailscale,tailscale/tailscale:v1.102.3
+front,https://192.168.3.167:8443 (fwd.py on enigma)
+pcs,70 (Docker on enigma)
+groups,140
+students,700
+devices per student,2
+device clean-up,off for the whole run
+device machine,enigma: 16 cores, floor 2500 MB
+device machine,server0: 8 cores, floor 4000 MB
+device machine,enigma-b: 8 cores, floor 1200 MB
