@@ -52,9 +52,15 @@ CREATE TABLE IF NOT EXISTS enrolment_members (
   enrolment_id INTEGER NOT NULL REFERENCES enrolments(id) ON DELETE CASCADE,
   position INTEGER NOT NULL, name TEXT NOT NULL, student_id TEXT NOT NULL, email TEXT NOT NULL,
   PRIMARY KEY (enrolment_id, position));
+CREATE TABLE IF NOT EXISTS enrolment_supervisors (
+  enrolment_id INTEGER NOT NULL REFERENCES enrolments(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL,
+  PRIMARY KEY (enrolment_id, position));
 CREATE TABLE IF NOT EXISTS servers (
   name TEXT PRIMARY KEY, token_sha TEXT NOT NULL, created_at TEXT NOT NULL,
   last_seen TEXT, report TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS former_members (
+  email TEXT PRIMARY KEY, since TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit (
   id INTEGER PRIMARY KEY, ts TEXT NOT NULL, actor TEXT NOT NULL,
   action TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '');
@@ -64,10 +70,13 @@ DEFAULT_SETTINGS = {
     # Master switches. Policy enforcement on; destructive steps start in dry-run.
     "enforce_policy": "1",
     "device_cleanup": "0",
+    # Devices of students who left every group (group or term removed from the Sheet), after a day's grace.
+    "former_cleanup": "1",
     "ssh_enforce": "0",
     "max_devices_per_student": "2",
     "slot_ports": json.dumps(["tcp:22"]),
     "extra_grants": json.dumps([]),
+    "extra_ssh": json.dumps([]),
     # The Headscale server a PC belongs to when the Sheet's Server cell is blank.
     "default_server": "hs1",
 }
@@ -197,6 +206,11 @@ class DB:
         e = dict(row)
         e["members"] = [dict(m) for m in self.q(
             "SELECT name, student_id, email FROM enrolment_members WHERE enrolment_id = ? ORDER BY position", (eid,))]
+        # The first is the supervisor, the rest co-supervisors. Enrolments sent before emails were asked for
+        # only have the names, in the supervisor/co_supervisor columns.
+        e["supervisors"] = [dict(s) for s in self.q(
+            "SELECT name, email FROM enrolment_supervisors WHERE enrolment_id = ? ORDER BY position", (eid,))] or \
+            [{"name": n.strip(), "email": ""} for n in [e["supervisor"], *e["co_supervisor"].split(",")] if n.strip()]
         return e
 
     def enrolments_for(self, email: str) -> list[dict]:

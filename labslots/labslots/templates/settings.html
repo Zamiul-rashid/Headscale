@@ -14,13 +14,18 @@
       <span><b>Write the Headscale policy from the routine.</b> Only the group in each slot reaches its PC. If anything fails the policy falls back to admins only.</span></label>
     <label class="check"><input type="checkbox" name="device_cleanup" value="1" {{ 'checked' if s.device_cleanup == '1' }}>
       <span><b>Remove students' devices outside their slot</b> and beyond the per-student limit. Off means dry-run: the Now page lists what would be removed.</span></label>
+    <label class="check"><input type="checkbox" name="former_cleanup" value="1" {{ 'checked' if s.former_cleanup == '1' }}>
+      <span><b>Remove devices of students in no group</b>, a day after their group, its term or all its slots leave the Sheet. Off means dry-run: the Now page lists what would be removed.</span></label>
     <label style="max-width: 240px">Devices per student <input type="number" name="max_devices_per_student" min="1" max="10" value="{{ s.max_devices_per_student }}"></label>
     <label class="check"><input type="checkbox" name="ssh_enforce" value="1" {{ 'checked' if s.ssh_enforce == '1' }}>
       <span><b>Switch accounts on PCs over SSH</b> at every slot change, on PCs with account switching turned on.</span></label>
-    <label>Ports a group gets on its PC during its slot <input name="ports" value="{{ ports }}" spellcheck="false"><small>Comma-separated, for example tcp:22 or tcp:22,tcp:8888.</small></label>
+    <label>Ports a group gets on its PC during its slot <input name="ports" value="{{ ports }}" spellcheck="false"><small>Comma-separated, for example tcp:22,tcp:8888. tcp:22 is always included: it is how the group reaches its PC with Tailscale SSH.</small></label>
     <label>Extra grants
       <textarea name="extra" rows="12" class="code" spellcheck="false">{{ extra }}</textarea>
-      <small>A JSON list added to every policy, for permanent rules such as each user's own devices reaching each other. Edit rules here, not in Headplane: the scheduler rewrites the live policy.</small></label>
+      <small>A JSON list added to every policy, for permanent network rules such as each user's own devices reaching each other. Edit rules here, not in Headplane: the scheduler rewrites the live policy.</small></label>
+    <label>Extra SSH rules
+      <textarea name="extra_ssh" rows="8" class="code" spellcheck="false">{{ extra_ssh }}</textarea>
+      <small>A JSON list of permanent Tailscale SSH rules, each with <code>src</code>, <code>dst</code> and <code>users</code>, for example <code>{"src": ["tag:jumphost"], "dst": ["tag:pc-41"], "users": ["autogroup:nonroot"]}</code>. Lab PCs answer SSH on the tailnet only to the policy's SSH rules, so a grant to tcp:22 alone is refused. Each rule also gets its tcp:22 grant.</small></label>
     <div><button class="btn primary">Save settings</button></div>
   </form>
 
@@ -84,6 +89,22 @@
   </div>
 </section>
 {% endif %}
+
+<section class="section" id="email" style="margin-top: var(--s8)">
+  <h2>Email</h2>
+  {% if mail.on %}
+  <p class="muted" style="max-width: 75ch">Enrolment decisions are emailed to every member of the group. Sent from <code>{{ mail.sender }}</code> through <code>{{ mail.host }}:{{ mail.port }}</code>{% if mail.user %} as <code>{{ mail.user }}</code>{% endif %}. Each send and failure is in the <a href="{{ base }}/audit">Log</a>.</p>
+  <form method="post" action="{{ base }}/settings/email-test"><button class="btn">Send a test email to {{ user }}</button></form>
+  {% else %}
+  <div class="note warn">Email is off. Groups still see each decision on their status page.</div>
+  <p class="muted" style="max-width: 75ch">To turn it on, on the server in <code>/opt/labslots</code>:</p>
+  <ol class="steps">
+    <li>Set <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code> and <code>SMTP_FROM</code> in <code>.env</code>. For a Google account: <code>smtp.gmail.com</code>, port <code>587</code>, the account's address as user and sender.</li>
+    <li>Put the password in <code>secrets/hub/smtp_password</code> (mode 400, owner uid 10001). For a Google account that is an app password, not the account password.</li>
+    <li>Run <code>docker compose up -d labslots</code>, then come back here and send a test email.</li>
+  </ol>
+  {% endif %}
+</section>
 
 <section class="section" id="rotation" style="margin-top: var(--s8)">
   <h2>Test rotation</h2>

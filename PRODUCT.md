@@ -10,7 +10,7 @@ web
 
 - **Lab admins** (the project team: Zamiul Rashid, Akid Anis, Tanzim Ahmed) run the system day to day. Mostly on a laptop, on campus or at home; sometimes a quick check on a phone between classes.
 - **Supervisors** (Md. Golam Rabiul Alam, Mollah Md. Saif) open the same desk to see which group has which PC and to approve requests.
-- Thesis group students use only the enrolment and status page (`/slots/enroll`), never the admin desk. Day to day they sign in to Headscale from their own devices and SSH to their group's PC during its slot.
+- Thesis group students use only the enrolment and status page (`/slots/enroll`), never the admin desk. Day to day they sign in to Headscale from their own devices and SSH to their group's PC during its slot with Tailscale SSH (no key or password: the tailnet identity is checked against the policy).
 
 ## Product Purpose
 
@@ -24,11 +24,11 @@ The schedule is the access control. Approving a cell in the weekly grid is what 
 
 - Use is split evenly between two rhythms: heavy grid editing when a term is set up or reshuffled, and daily status checks and approvals through the semester.
 - Slot model (proposal.tex): 14 slots per PC per week, 08:00-20:00 and 20:00-08:00 (Asia/Dhaka). A night slot belongs to the date it starts. Each group normally gets two slots on different days. Bookings repeat weekly within a term (a date range).
-- Thesis groups do not request PCs or slots. They **enrol**: one member signs in with their BRACU Google account at `/slots/enroll` and sends the group's details (group name, thesis title, supervisor and co-supervisor, each member's name, student ID and BRACU email, hardware needs). This replaces the Google Form the lab used before.
+- Thesis groups do not request PCs or slots. They **enrol**: one member signs in with their BRACU Google account at `/slots/enroll` and sends the group's details (group name, thesis title, the supervisor and any co-supervisors with their emails, up to five members with name, student ID and BRACU G Suite email (@g.bracu.ac.bd, never a personal address), hardware needs). This replaces the Google Form the lab used before.
 - An admin reviews each enrolment and **assigns** the group a PC and its weekly slots; timing is entirely the admin's decision. Approving creates the group and its bookings in one step. Rejections carry a reason.
-- Groups learn the outcome on their status page at `/slots/enroll` (PC, slots, how to connect, where to add SSH keys) and by email to every member once outgoing email is configured.
-- Groups are lists of BRACU emails plus one Linux account (`grp-<slug>`) and SSH keys. PCs are tagged Headscale nodes (`tag:pc-41`).
-- Enforcement has three switches: policy writing (on), device clean-up (dry-run by default), and on-PC account switching over SSH (off until a PC is prepared with setup-lab-pc.sh). Failure falls back to an admins-only policy.
+- Groups learn the outcome on their status page at `/slots/enroll` (PC, slots, how to connect) and by email to every member once outgoing email is configured.
+- Groups are lists of BRACU emails plus one Linux account (`grp-<slug>`); nobody holds an SSH key. PCs are tagged Headscale nodes (`tag:pc-41`).
+- Enforcement has three switches: policy writing (on), device clean-up (dry-run by default), and on-PC account switching over Tailscale SSH (off until a PC is prepared with setup-lab-pc.sh). Failure falls back to an admins-only policy.
 
 ## Capabilities and Constraints
 

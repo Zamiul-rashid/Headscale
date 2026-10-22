@@ -44,13 +44,13 @@ def test_pages_render_for_admin(tmp_path):
     c, db, _ = client(tmp_path)
     db.set_setting("ssh_enforce", "1")
     add_server(db, "hs1")
-    store_report(db, "hs1", {"pubkey": "ssh-ed25519 AAAATEST labslots-scheduler", "errors": [],
+    store_report(db, "hs1", {"errors": [],
                              "nodes": [{"name": "pc-41", "tags": ["tag:pc-41"], "online": True, "ipv4": "100.64.0.2"}],
                              "pc_state": {"1": {"active_account": "grp-thesis-a", "last_error": None}}})
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
     for path in ("/slots/", "/slots/calendar", "/slots/calendar?week=2026-10-26",
                  "/slots/enrolments", "/slots/pcs",
-                 "/slots/terms", "/slots/settings", "/slots/audit", "/slots/pcs/setup-lab-pc.sh?server=hs1"):
+                 "/slots/terms", "/slots/settings", "/slots/audit", "/slots/pcs/setup-lab-pc.sh"):
         r = c.get(path)
         assert r.status_code == 200, path
     cal = c.get("/slots/calendar?week=2026-10-19").text
@@ -63,7 +63,8 @@ def test_pages_render_for_admin(tmp_path):
         assert c.get(old, follow_redirects=False).headers["location"] == "/slots/calendar"
     now = c.get("/slots/").text
     assert "grp-thesis-a" in now and "100.64.0.2" in now
-    assert "ssh-ed25519 AAAATEST" in c.get("/slots/pcs/setup-lab-pc.sh?server=hs1").text
+    script = c.get("/slots/pcs/setup-lab-pc.sh").text   # served as is: Tailscale SSH, no key to fill in
+    assert "tailscale set --ssh" in script and "PUBKEY" not in script
     assert "hs1: policy its agent would write now" in c.get("/slots/settings").text
 
 
@@ -92,6 +93,15 @@ def test_settings_rejects_bad_extra_grants(tmp_path):
                                     "extra": '[{"src":["autogroup:member"],"dst":["autogroup:self"],"ip":["*"]}]'},
            headers=ORIGIN)
     assert "autogroup:self" in db.setting("extra_grants")
+    c.post("/slots/settings", data={"enforce_policy": "1", "ports": "tcp:22", "extra": "[]",
+                                    "extra_ssh": '[{"src": ["tag:jumphost"], "dst": ["*"], "users": ["root"]}]'},
+           headers=ORIGIN)
+    assert db.setting("extra_ssh") == "[]" and "autogroup:self" in db.setting("extra_grants")  # nothing saved
+    jump = '[{"src": ["tag:jumphost"], "dst": ["tag:pc-41"], "users": ["autogroup:nonroot"]}]'
+    c.post("/slots/settings", data={"enforce_policy": "1", "ports": "tcp:22", "extra": "[]", "extra_ssh": jump},
+           headers=ORIGIN)
+    assert json.loads(db.setting("extra_ssh")) == json.loads(jump)
+    assert "tag:jumphost" in c.get("/slots/settings").text
 
 
 def test_servers_tokens_and_agent_api(tmp_path):
@@ -122,9 +132,9 @@ def test_enforce_now_asks_agents(tmp_path):
 
 
 ENROL = {"group_name": "Bangla ASR", "thesis_title": "Low-resource Bangla speech recognition",
-         "supervisor": "Dr. Alam", "co_supervisor": "", "hardware": "1 GPU, 12 GB", "notes": "",
+         "s_name": ["Dr. Alam"], "s_email": ["alam@bracu.ac.bd"], "hardware": "1 GPU, 12 GB", "notes": "",
          "m_name": ["Rahim Uddin", "Karim Ali"], "m_id": ["21101001", "21101002"],
-         "m_email": ["rahim@g.bracu.ac.bd", "karim@g.bracu.ac.bd"]}
+         "m_email": ["rahim@g.bracu.ac.bd", "karim"]}   # the form takes the part before @g.bracu.ac.bd
 
 
 def test_student_enrols_and_cannot_see_admin_pages(tmp_path):
@@ -148,7 +158,62 @@ def test_enrol_validation(tmp_path):
     c.post("/slots/enroll", data=bad, headers=ORIGIN, follow_redirects=False)
     assert db.one("SELECT COUNT(*) AS n FROM enrolments")["n"] == 0
     page = c.get("/slots/enroll").text
-    assert "8-digit student ID" in page and "Include yourself" in page
+    assert "student ID is 8 digits" in page and "Include yourself" in page and "not a personal one" in page
+    assert 'value="21101002"' in page                                     # what was typed comes back
+
+
+def test_enrol_needs_g_suite_members_and_a_supervisor(tmp_path):
+    c, db, _ = client(tmp_path)
+    c.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
+    form = c.get("/slots/enroll").text
+    assert form.count('name="m_name"') == 5 and "@g.bracu.ac.bd" in form and "Add co-supervisor" in form
+    for bad in (dict(ENROL, m_email=["rahim@g.bracu.ac.bd", "karim@bracu.ac.bd"]),    # staff domain, not a student
+                dict(ENROL, m_email=["rahim@g.bracu.ac.bd", "karim@gmail.com"]),      # personal address
+                dict(ENROL, s_name=[""], s_email=[""]),                               # no supervisor
+                dict(ENROL, s_name=["Dr. Alam"], s_email=["not-an-email"])):
+        c.post("/slots/enroll", data=bad, headers=ORIGIN)
+        assert db.one("SELECT COUNT(*) AS n FROM enrolments")["n"] == 0, bad
+    six = dict(ENROL, m_name=[f"S{i}" for i in range(6)], m_id=[f"2110100{i}" for i in range(6)],
+               m_email=["rahim@g.bracu.ac.bd"] + [f"s{i}" for i in range(1, 6)])
+    c.post("/slots/enroll", data=dict(six, s_name=["Dr. Alam", "Dr. Saif", ""], s_email=["alam@bracu.ac.bd", "saif@bracu.ac.bd", ""]),
+           headers=ORIGIN)
+    e = db.enrolment(1)
+    assert len(e["members"]) == 5                                         # a group is at most five
+    assert e["members"][1]["email"] == "s1@g.bracu.ac.bd"
+    assert e["supervisors"] == [{"name": "Dr. Alam", "email": "alam@bracu.ac.bd"},
+                                {"name": "Dr. Saif", "email": "saif@bracu.ac.bd"}]
+    assert (e["supervisor"], e["co_supervisor"]) == ("Dr. Alam", "Dr. Saif")
+    assert "supervisors Dr. Alam, Dr. Saif" in c.get("/slots/enroll").text
+
+
+def test_personal_google_account_cannot_sign_in_to_enrol(tmp_path):
+    c, _, _ = client(tmp_path)
+    c.get("/slots/dev-login?email=someone@gmail.com&next=/enroll")
+    assert "Enrolment form" not in c.get("/slots/enroll").text
+    c.get("/slots/dev-login?email=lecturer@bracu.ac.bd&next=/enroll")       # staff, not a student
+    assert "Enrolment form" not in c.get("/slots/enroll").text
+
+
+def test_email_settings_and_test_email(tmp_path, monkeypatch):
+    from labslots.db import DB
+    from labslots.mailer import Mailer
+    c, db, _ = client(tmp_path)
+    c.get("/slots/dev-login?email=boss@bracu.ac.bd")
+    page = c.get("/slots/settings").text
+    assert "Email is off" in page and "smtp_password" in page
+    c.post("/slots/settings/email-test", headers=ORIGIN)
+    assert db.one("SELECT 1 FROM audit WHERE action = 'email-test'") is None   # nothing to send with
+
+    sent = []
+    monkeypatch.setattr(Mailer, "send", lambda self, to, subject, body, done=None: (sent.append(to), done(True, "ok")))
+    on = cfg(tmp_path)
+    on.smtp_host, on.smtp_from = "smtp.gmail.com", "lab@g.bracu.ac.bd"
+    c2 = TestClient(create_app(on, db=DB(tmp_path / "mail.db"), clock=Clock(MON_10), sheet=FakeSheets()))
+    c2.get("/slots/dev-login?email=boss@bracu.ac.bd")
+    assert "Sent from <code>lab@g.bracu.ac.bd</code>" in c2.get("/slots/settings").text
+    c2.post("/slots/settings/email-test", headers=ORIGIN)
+    assert sent == [["boss@bracu.ac.bd"]]
+    assert c2.app.state.db.one("SELECT 1 FROM audit WHERE action = 'email-test-sent'")
 
 
 def test_admin_approves_enrolment_into_the_sheet(tmp_path):
@@ -176,7 +241,7 @@ def test_admin_approves_enrolment_into_the_sheet(tmp_path):
     assert "Enrolled" in status and "pc-43" in status and "grp-bangla-asr" in status and "Wed 08:00-20:00" in status
 
 
-def test_student_keys_and_reject_flow(tmp_path):
+def test_no_student_keys_and_reject_flow(tmp_path):
     c, db, _ = client(tmp_path)
     ids = {"p2": 2}
     s = TestClient(c.app)
@@ -185,16 +250,15 @@ def test_student_keys_and_reject_flow(tmp_path):
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
     c.post("/slots/enrolments/1/approve", data={"slug": "bangla-asr", "term": 1, "pc": ids["p2"], "slot": ["0-day"]},
            headers=ORIGIN)
-    s.post("/slots/enroll/1/keys", data={"ssh_keys": "not a key"}, headers=ORIGIN)
-    gid = db.enrolment(1)["group_id"]
-    assert db.one("SELECT ssh_keys FROM groups WHERE id = ?", (gid,))["ssh_keys"] == ""
-    s.post("/slots/enroll/1/keys", data={"ssh_keys": "ssh-ed25519 AAAAC3Nza rahim@laptop"}, headers=ORIGIN)
-    assert db.one("SELECT ssh_keys FROM groups WHERE id = ?", (gid,))["ssh_keys"] == "ssh-ed25519 AAAAC3Nza rahim@laptop"
+    # Tailscale SSH checks the tailnet identity: there is nowhere to upload keys
+    assert s.post("/slots/enroll/1/keys", data={"ssh_keys": "ssh-ed25519 AAAAC3Nza rahim@laptop"},
+                  headers=ORIGIN).status_code in (404, 405)
+    assert "No SSH key or password" in s.get("/slots/enroll").text
     # a second group gets rejected with a reason the student can read
     t = TestClient(c.app)
     t.get("/slots/dev-login?email=nadia@g.bracu.ac.bd&next=/enroll")
-    t.post("/slots/enroll", data=dict(ENROL, group_name="Vision", m_name=["Nadia"], m_id=["21101009"],
-                                      m_email=["nadia@g.bracu.ac.bd"]), headers=ORIGIN)
+    t.post("/slots/enroll", data=dict(ENROL, group_name="Vision", m_name=["Nadia", "Tanvir"], m_id=["21101009", "21101010"],
+                                      m_email=["nadia@g.bracu.ac.bd", "tanvir"]), headers=ORIGIN)
     c.post("/slots/enrolments/2/reject", data={"note": "Ask your supervisor to confirm"}, headers=ORIGIN)
     assert db.enrolment(2)["status"] == "rejected"
     page = t.get("/slots/enroll").text
@@ -300,3 +364,20 @@ def test_rotated_service_account_key_is_picked_up(tmp_path):
     tmp.replace(f)                                   # a new download dropped in under the same name
     sh.tab_ids()
     assert len(signins) == 2 and sh.email.startswith("new@")
+
+
+def test_groups_of_one_to_five(tmp_path):
+    c, db, _ = client(tmp_path)
+    c.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
+    form = c.get("/slots/enroll").text
+    assert "Up to 5 members" in form and form.count("placeholder=Optional") == 4   # rows 2 to 5
+    three = dict(ENROL, m_name=["Rahim Uddin", "Karim Ali", "Nadia Islam", "", ""],
+                 m_id=["21101001", "21101002", "21101003", "", ""], m_email=["rahim@g.bracu.ac.bd", "karim", "nadia", "", ""])
+    c.post("/slots/enroll", data=three, headers=ORIGIN)
+    assert len(db.enrolment(1)["members"]) == 3                       # empty rows are simply left out
+    (tmp_path / "solo").mkdir()
+    c2, db2, _ = client(tmp_path / "solo")
+    c2.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
+    c2.post("/slots/enroll", data=dict(ENROL, m_name=["Rahim Uddin"], m_id=["21101001"], m_email=["rahim@g.bracu.ac.bd"]),
+            headers=ORIGIN)
+    assert [m["email"] for m in db2.enrolment(1)["members"]] == ["rahim@g.bracu.ac.bd"]   # working alone

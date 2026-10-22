@@ -24,7 +24,7 @@ def test_agent_enforces_its_slice_and_reports(tmp_path):
     rep = agent.run_once()
     assert not rep.errors, rep.errors
     assert '"group:thesis-a"' in hs.policies[-1] and "tag:pc-41" in hs.policies[-1]
-    assert ssh.calls == [("100.64.0.2", "grp-thesis-a", "ssh-ed25519 AAAAA a@x")]
+    assert ssh.calls == [("100.64.0.2", "grp-thesis-a")]
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
     now = c.get("/slots/").text
     assert "grp-thesis-a" in now and "100.64.0.2" in now and "No report" not in now
@@ -95,3 +95,34 @@ def test_agent_without_any_schedule_leaves_headscale_alone(tmp_path):
     agent.hub.http = c
     agent.run_once()
     assert '"group:thesis-a"' in hs.policies[-1]
+
+
+def test_group_removed_from_the_sheet_loses_its_devices_a_day_later(tmp_path):
+    from datetime import timedelta
+    c, db, agent, hs, ssh, clock = hub_and_agent(tmp_path)
+    agent.run_once()
+    db.x("DELETE FROM groups WHERE slug = 'thesis-b'")     # end of term: the row is gone from the Sheet
+    agent.run_once()
+    assert agent.db.one("SELECT email FROM former_members")["email"] == "bob@g.bracu.ac.bd"
+    assert "20" not in hs.deleted                          # a day's grace, in case it was a mistake
+    clock.dt += timedelta(hours=23)
+    agent.run_once()
+    assert "20" not in hs.deleted
+    clock.dt += timedelta(hours=2)
+    agent.run_once()
+    assert "20" in hs.deleted and agent.db.one("SELECT 1 FROM audit WHERE action = 'device-removed'")
+    assert not {"2", "3", "10", "30", "40"} & set(hs.deleted)   # PCs, students still in a group, admins, strangers
+
+
+def test_restored_group_is_not_cleaned_up(tmp_path):
+    from datetime import timedelta
+    c, db, agent, hs, ssh, clock = hub_and_agent(tmp_path)
+    agent.run_once()
+    gid = db.one("SELECT id FROM groups WHERE slug = 'thesis-b'")["id"]
+    db.x("DELETE FROM members WHERE group_id = ?", (gid,))  # members cleared by mistake...
+    agent.run_once()
+    db.x("INSERT INTO members(group_id, email) VALUES (?, 'bob@g.bracu.ac.bd')", (gid,))   # ...and put back
+    agent.run_once()
+    clock.dt += timedelta(days=2)
+    agent.run_once()
+    assert agent.db.one("SELECT 1 FROM former_members") is None and "20" not in hs.deleted

@@ -694,12 +694,12 @@ class Sync:
 
     def enrolment_rows(self) -> list[list]:
         rows = [HEADERS[ENROLMENTS]]
-        for e in self.db.q("SELECT * FROM enrolments ORDER BY id"):
-            ms = self.db.q("SELECT name, student_id, email FROM enrolment_members WHERE enrolment_id = ? "
-                           "ORDER BY position", (e["id"],))
+        for r in self.db.q("SELECT id FROM enrolments ORDER BY id"):
+            e = self.db.enrolment(r["id"])
+            sups = [f"{s['name']} · {s['email']}" if s["email"] else s["name"] for s in e["supervisors"]]
             rows.append([e["id"], e["submitted_at"].replace("T", " "), e["status"], e["group_name"], e["thesis_title"],
-                         e["supervisor"], e["co_supervisor"],
-                         "\n".join(f"{m['name']} · {m['student_id']} · {m['email']}" for m in ms),
+                         sups[0] if sups else e["supervisor"], "\n".join(sups[1:]),
+                         "\n".join(f"{m['name']} · {m['student_id']} · {m['email']}" for m in e["members"]),
                          e["hardware"], e["decided_by"] or "", e["decision_note"]])
         return rows
 

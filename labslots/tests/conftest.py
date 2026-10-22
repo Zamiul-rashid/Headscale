@@ -39,11 +39,8 @@ class FakeSSH:
         self.calls = []
         self.ok = ok
 
-    def ensure_key(self):
-        return "ssh-ed25519 AAAATEST labslots-scheduler"
-
-    def switch(self, host, account, keys=""):
-        self.calls.append((host, account, keys))
+    def switch(self, host, account):
+        self.calls.append((host, account))
         return SSHResult(self.ok, "slot-active=%s" % (account or "-"))
 
 

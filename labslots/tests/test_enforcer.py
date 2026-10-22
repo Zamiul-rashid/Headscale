@@ -83,12 +83,12 @@ def test_ssh_switch_only_when_enabled_and_idempotent(db):
     assert ssh.calls == []  # global switch off
     db.set_setting("ssh_enforce", "1")
     e.reconcile()
-    assert ssh.calls == [("100.64.0.2", "grp-thesis-a", "ssh-ed25519 AAAAA a@x")]  # pc-43 has switching off
+    assert ssh.calls == [("100.64.0.2", "grp-thesis-a")]  # pc-43 has switching off
     e.reconcile()
     assert len(ssh.calls) == 1  # already in desired state
     e.clock.dt = MON_21
     e.reconcile()
-    assert ssh.calls[-1][:2] == ("100.64.0.2", "grp-thesis-b")
+    assert ssh.calls[-1] == ("100.64.0.2", "grp-thesis-b")
 
 
 def test_ssh_failure_is_retried(db):
@@ -109,7 +109,7 @@ def test_free_slot_switches_pc_to_nobody(db):
     db.set_setting("ssh_enforce", "1")
     ssh = FakeSSH()
     make(db, datetime(2026, 10, 21, 10), ssh=ssh).reconcile()  # Wednesday: no bookings
-    assert ssh.calls == [("100.64.0.2", None, "")]
+    assert ssh.calls == [("100.64.0.2", None)]
 
 
 def test_test_rotation_cycles_groups_on_one_pc(db):
@@ -165,3 +165,34 @@ def test_pcs_are_switched_in_parallel(db):
     rep = Enforcer(db, FakeHeadscale(ns), ssh, Clock(MON_10)).reconcile()
     assert len(rep.ssh) == 21 and not rep.errors       # pc-41 plus the 20 new ones
     assert ssh.peak == 10 and rep.ssh_seconds < 1.5     # 21 x 0.2 s one by one would take 4.2 s
+
+
+def test_devices_of_students_in_no_group_go_after_a_day(db):
+    from labslots.headscale import Node
+    seed(db)
+    db.x("INSERT INTO former_members(email, since) VALUES ('carol@g.bracu.ac.bd', '2026-10-18T09:00:00')")  # 25 h
+    db.x("INSERT INTO former_members(email, since) VALUES ('dan@g.bracu.ac.bd', '2026-10-19T09:00:00')")    # 1 h
+    db.x("INSERT INTO former_members(email, since) VALUES ('boss@bracu.ac.bd', '2026-10-01T09:00:00')")     # an admin
+    hs = FakeHeadscale(nodes() + [Node(id="50", name="carol-laptop", owner="carol@g.bracu.ac.bd"),
+                                  Node(id="51", name="dan-laptop", owner="dan@g.bracu.ac.bd")])
+    rep = make(db, MON_10, hs).reconcile()                 # device_cleanup is off: slot-end removals stay dry-run
+    assert hs.deleted == ["50"] and rep.deleted == ["carol-laptop (carol@g.bracu.ac.bd, id 50, in no group)"]
+    assert "bob-laptop (bob@g.bracu.ac.bd, id 20)" in rep.would_delete
+    db.set_setting("former_cleanup", "0")
+    hs.deleted.clear()
+    rep = make(db, MON_10, hs).reconcile()
+    assert hs.deleted == [] and "carol-laptop (carol@g.bracu.ac.bd, id 50, in no group)" in rep.would_delete
+
+
+def test_leavers_are_removed_a_batch_per_run(db):
+    from labslots.enforcer import FORMER_PER_RUN
+    from labslots.headscale import Node
+    seed(db)
+    leavers = [Node(id=str(100 + i), name=f"old-{i}", owner=f"old{i}@g.bracu.ac.bd") for i in range(FORMER_PER_RUN + 5)]
+    for n in leavers:
+        db.x("INSERT INTO former_members(email, since) VALUES (?, '2026-10-01T09:00:00')", (n.owner,))
+    hs = FakeHeadscale(nodes() + leavers)
+    make(db, MON_10, hs).reconcile()
+    assert len(hs.deleted) == FORMER_PER_RUN               # the rest wait for the next run, 15 s later
+    make(db, MON_10, hs).reconcile()
+    assert len(hs.deleted) == len(leavers)

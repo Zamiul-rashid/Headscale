@@ -45,7 +45,7 @@ class Config:
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from: str = ""
-    student_domains: tuple = ("g.bracu.ac.bd", "bracu.ac.bd")
+    student_domains: tuple = ("g.bracu.ac.bd",)  # students' G Suite; personal and staff addresses are refused
     sheet_id: str = ""
     google_key_file: str = ""
 
@@ -79,7 +79,7 @@ class Config:
             smtp_password=_read(e("SMTP_PASSWORD_FILE", "/run/secrets/smtp_password")),
             smtp_from=e("SMTP_FROM", ""),
             student_domains=tuple(d.strip().lower() for d in e("LABSLOTS_STUDENT_DOMAINS",
-                                                                "g.bracu.ac.bd,bracu.ac.bd").split(",") if d.strip()),
+                                                                "g.bracu.ac.bd").split(",") if d.strip()),
             sheet_id=e("LABSLOTS_SHEET", ""),
             google_key_file=e("GOOGLE_SA_KEY_FILE", "/run/secrets/google-service-account.json"),
         )

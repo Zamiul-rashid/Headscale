@@ -335,12 +335,15 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
             policies.append({"name": r_["name"], "preview": preview_for(r_["name"]),
                              "live": r_["report"].get("live_policy", ""), "applied_at": r_["report"].get("applied_at", "")})
         return page(request, "settings.html", admins=db.admins(), s={k: db.setting(k) for k in (
-            "enforce_policy", "device_cleanup", "ssh_enforce", "max_devices_per_student")},
+            "enforce_policy", "device_cleanup", "former_cleanup", "ssh_enforce", "max_devices_per_student")},
             ports=", ".join(json.loads(db.setting("slot_ports") or "[]")),
             extra=json.dumps(json.loads(db.setting("extra_grants") or "[]"), indent=2),
+            extra_ssh=json.dumps(json.loads(db.setting("extra_ssh") or "[]"), indent=2),
             policies=policies, servers=reps, default_server=db.setting("default_server"),
             new_token=request.session.pop("new_token", None),
-            rotation=enforcer.rotation(), pcs=db.pcs(), groups=db.groups())
+            rotation=enforcer.rotation(), pcs=db.pcs(), groups=db.groups(),
+            mail={"on": mailer.enabled, "host": cfg.smtp_host, "port": cfg.smtp_port, "user": cfg.smtp_user,
+                  "sender": cfg.smtp_from})
 
     def preview_for(server: str) -> str:
         """The policy that server's agent would write now, built from its slice like the agent does."""
@@ -377,29 +380,49 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
 
     @r.post("/settings")
     async def settings_save(request: Request, enforce_policy: str = Form(""), device_cleanup: str = Form(""),
-                            ssh_enforce: str = Form(""), max_devices_per_student: int = Form(2),
-                            ports: str = Form("tcp:22"), extra: str = Form("[]")):
+                            former_cleanup: str = Form(""), ssh_enforce: str = Form(""),
+                            max_devices_per_student: int = Form(2), ports: str = Form("tcp:22"), extra: str = Form("[]"), extra_ssh: str = Form("[]")):
         who = admin(request)
         same_origin(request)
         port_list = [p.strip() for p in ports.split(",") if p.strip()]
         try:
-            grants = json.loads(extra or "[]")
-            assert isinstance(grants, list)
-            build_policy(_with_extra(enforcer.policy_input([]), grants, port_list))
+            grants, ssh_rules = json.loads(extra or "[]"), json.loads(extra_ssh or "[]")
+            assert isinstance(grants, list) and isinstance(ssh_rules, list), "both must be JSON lists"
+            build_policy(_with_extra(enforcer.policy_input([]), grants, port_list, ssh_rules))
         except Exception as e:  # noqa: BLE001
-            flash(request, f"Not saved: extra grants / ports invalid ({e}).", "err")
+            flash(request, f"Not saved: extra grants, extra SSH rules or ports invalid ({e}).", "err")
             return back("/settings")
         for key, val in (("enforce_policy", enforce_policy), ("device_cleanup", device_cleanup),
-                         ("ssh_enforce", ssh_enforce)):
+                         ("former_cleanup", former_cleanup), ("ssh_enforce", ssh_enforce)):
             db.set_setting(key, "1" if val else "0")
         db.set_setting("max_devices_per_student", str(max(1, max_devices_per_student)))
         db.set_setting("slot_ports", json.dumps(port_list or ["tcp:22"]))
         db.set_setting("extra_grants", json.dumps(grants))
+        db.set_setting("extra_ssh", json.dumps(ssh_rules))
         db.audit(who, "settings-saved", f"policy={'on' if enforce_policy else 'off'} "
                                         f"cleanup={'on' if device_cleanup else 'dry-run'} "
+                                        f"leavers={'on' if former_cleanup else 'dry-run'} "
                                         f"ssh={'on' if ssh_enforce else 'off'}")
         flash(request, "Settings saved. They apply on the next enforcement run (within a minute).")
         return back("/settings")
+
+    @r.post("/settings/email-test")
+    async def email_test(request: Request):
+        who = admin(request)
+        same_origin(request)
+        if not mailer.enabled:
+            flash(request, "Email is off: set it up as described under Email first.", "err")
+            return back("/settings#email")
+
+        def done(ok, detail):
+            db.audit("mailer", "email-test-sent" if ok else "email-test-error", f"to {who}: {detail}")
+
+        mailer.send([who], "Test email from the lab PC slot system",
+                    f"This is a test from {cfg.public_url}{base}/settings, sent at {who}'s request.\n\n"
+                    "If it arrived, enrolment decisions will reach students the same way.\n\nBRACU CSE Research Lab", done)
+        db.audit(who, "email-test", f"asked for a test email to {who}")
+        flash(request, f"Sending a test email to {who}. Whether it was sent shows in the Log within a minute.")
+        return back("/settings#email")
 
     @r.post("/settings/rotation")
     async def rotation_start(request: Request):
@@ -464,7 +487,14 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
 
     # -- enrolment: thesis groups apply, admins assign a PC and slots ---------------
     STUDENT_ID_RE = re.compile(r"^\d{8}$")
-    MAX_MEMBERS = 6
+    MIN_MEMBERS, MAX_MEMBERS = 1, 5   # a thesis group: one to five students
+    MAX_SUPERVISORS = 3    # the supervisor and up to two co-supervisors
+    student_domain = cfg.student_domains[0] if cfg.student_domains else "g.bracu.ac.bd"
+
+    def student_address(raw: str) -> str:
+        """A member's email as typed: the part before @g.bracu.ac.bd, or the whole address."""
+        raw = raw.strip().lower()
+        return f"{raw}@{student_domain}" if raw and "@" not in raw else raw
 
     def slot_text(weekday: int, half: str) -> str:
         return f"{WEEKDAYS[weekday]} {'08:00-20:00' if half == 'day' else '20:00-08:00 (overnight)'}"
@@ -521,7 +551,9 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
             e["assignment"] = group_assignment(e["group_id"]) if e["status"] == "approved" and e["group_id"] else None
         active = [e for e in mine if e["status"] in ("pending", "approved")]
         return page(request, "enroll.html", me=email, me_admin=db.is_admin(email), enrolments=mine, can_apply=not active,
-                    max_members=MAX_MEMBERS, form=request.session.pop("enroll_form", None))
+                    min_members=MIN_MEMBERS, max_members=MAX_MEMBERS, max_supervisors=MAX_SUPERVISORS,
+                    student_domain=student_domain,
+                    form=request.session.pop("enroll_form", None))
 
     @r.post("/enroll")
     async def enroll_submit(request: Request):
@@ -529,22 +561,39 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         same_origin(request)
         f = await request.form()
         get = lambda k: (f.get(k) or "").strip()  # noqa: E731
-        names, ids, emails = f.getlist("m_name"), f.getlist("m_id"), f.getlist("m_email")
-        members, errors = [], []
-        for i in range(min(MAX_MEMBERS, max(len(names), len(ids), len(emails)))):
-            n = (names[i] if i < len(names) else "").strip()
-            sid = (ids[i] if i < len(ids) else "").strip()
-            em = (emails[i] if i < len(emails) else "").strip().lower()
+        col = lambda k, i: ((f.getlist(k)[i] if i < len(f.getlist(k)) else "") or "").strip()  # noqa: E731
+        members, supervisors, errors = [], [], []
+        for i in range(MAX_MEMBERS):
+            n, sid, em = col("m_name", i), col("m_id", i), student_address(col("m_email", i))
             if not (n or sid or em):
                 continue
-            if not n or not STUDENT_ID_RE.match(sid) or not EMAIL_RE.match(em) or not is_student_email(em):
-                errors.append(f"Member {i + 1}: give a name, an 8-digit student ID and a BRACU email.")
             members.append({"name": n, "student_id": sid, "email": em})
+            if not n:
+                errors.append(f"Member {i + 1}: give their full name.")
+            if not STUDENT_ID_RE.match(sid):
+                errors.append(f"Member {i + 1}: the student ID is 8 digits.")
+            if em and (not EMAIL_RE.match(em) or not is_student_email(em)):
+                errors.append(f"Member {i + 1}: use their BRACU G Suite address (…@{student_domain}), "
+                              f"not a personal one such as Gmail.")
+            elif not em:
+                errors.append(f"Member {i + 1}: give their BRACU G Suite address.")
         if email not in {m["email"] for m in members}:
             errors.append("Include yourself as a member, with the email you signed in with.")
+        if len(members) < MIN_MEMBERS:
+            errors.append(f"A thesis group has {MIN_MEMBERS} to {MAX_MEMBERS} members: add your groupmates.")
         if len({m["email"] for m in members}) != len(members):
             errors.append("Each member's email must be different.")
-        for k, label in (("group_name", "group name"), ("thesis_title", "thesis title"), ("supervisor", "supervisor")):
+        for i in range(MAX_SUPERVISORS):
+            n, em = col("s_name", i), col("s_email", i).lower()
+            if not (n or em):
+                if i == 0:
+                    errors.append("Give your supervisor's name and email.")
+                continue
+            supervisors.append({"name": n, "email": em})
+            who = "Supervisor" if i == 0 else f"Co-supervisor {i}"
+            if not n or not EMAIL_RE.match(em):
+                errors.append(f"{who}: give a name and an email address.")
+        for k, label in (("group_name", "group name"), ("thesis_title", "thesis title")):
             if not get(k):
                 errors.append(f"Give the {label}.")
         if any(e["status"] in ("pending", "approved") for e in db.enrolments_for(email)):
@@ -552,19 +601,22 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         if errors:
             for msg in errors:
                 flash(request, msg, "err")
-            request.session["enroll_form"] = {k: get(k) for k in ("group_name", "thesis_title", "supervisor",
-                                                                  "co_supervisor", "hardware", "notes")} | {
-                "members": members}
+            request.session["enroll_form"] = {k: get(k) for k in ("group_name", "thesis_title", "hardware", "notes")} | {
+                "members": members, "supervisors": supervisors}
             return back("/enroll")
+        sup_names = [s["name"][:120] for s in supervisors]
         with db.tx():
             eid = db.conn.execute(
                 "INSERT INTO enrolments(submitted_by, submitted_at, group_name, thesis_title, supervisor, "
                 "co_supervisor, hardware, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')",
-                (email, now_iso(), get("group_name")[:120], get("thesis_title")[:300], get("supervisor")[:120],
-                 get("co_supervisor")[:120], get("hardware")[:1000], get("notes")[:1000])).lastrowid
+                (email, now_iso(), get("group_name")[:120], get("thesis_title")[:300], sup_names[0],
+                 ", ".join(sup_names[1:]), get("hardware")[:1000], get("notes")[:1000])).lastrowid
             db.conn.executemany("INSERT INTO enrolment_members(enrolment_id, position, name, student_id, email) "
                                 "VALUES (?, ?, ?, ?, ?)", [(eid, i, m["name"][:120], m["student_id"], m["email"])
                                                          for i, m in enumerate(members)])
+            db.conn.executemany("INSERT INTO enrolment_supervisors(enrolment_id, position, name, email) "
+                                "VALUES (?, ?, ?, ?)", [(eid, i, s["name"][:120], s["email"][:200])
+                                                      for i, s in enumerate(supervisors)])
         db.audit(email, "enrolment-submitted", f"#{eid} {get('group_name')} ({len(members)} members)")
         flash(request, "Enrolment sent. An admin will assign your group a PC; this page shows the result.")
         return back("/enroll")
@@ -759,8 +811,9 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
     return app
 
 
-def _with_extra(inp, grants, ports):
+def _with_extra(inp, grants, ports, ssh_rules=()):
     inp.extra_grants = grants
+    inp.extra_ssh = list(ssh_rules)
     inp.ports = ports or ["tcp:22"]
     return inp
 

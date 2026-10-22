@@ -7,8 +7,9 @@ Order:
      Tailscale SSH logins change here: the PCs drop the outgoing group's sessions themselves.
   2. on each PC, make the incoming group's account the only slot-active one and stop the outgoing
      group's leftover processes (created on first use, so the incoming group can log in)
-  3. remove devices of students who are not in an active slot (+ per-student cap). Last, because
-     Headscale removes them one at a time and the policy already blocks them.
+  3. remove devices of students who are not in an active slot (+ per-student cap), and of students who
+     left every group a day ago or more. Last, because Headscale removes them one at a time and the
+     policy already blocks them.
 """
 
 from __future__ import annotations
@@ -31,6 +32,8 @@ from .sshexec import SSH
 
 log = logging.getLogger("labslots.enforcer")
 SWITCH_PARALLEL = 10  # PCs switched at once over SSH
+FORMER_GRACE = timedelta(hours=24)  # a group cleared by mistake in the Sheet can be restored before this
+FORMER_PER_RUN = 20  # leavers' devices removed per run (~1 s each), so a term's worth never delays a slot change
 
 
 @dataclass
@@ -112,6 +115,7 @@ class Enforcer:
             active=[(b["slug"], b["pc_tag"]) for b in active],
             ports=json.loads(self.db.setting("slot_ports") or '["tcp:22"]'),
             extra_grants=json.loads(self.db.setting("extra_grants") or "[]"),
+            extra_ssh=json.loads(self.db.setting("extra_ssh") or "[]"),
             accounts={b["slug"]: b["account"] for b in active},
         )
 
@@ -197,30 +201,41 @@ class Enforcer:
             return None
 
     def _cleanup_devices(self, rep: Report, nodes: list[Node]) -> None:
-        """Delete personal devices of students outside their slot, and beyond the cap."""
+        """Delete personal devices of students outside their slot and beyond the cap (device_cleanup), and of
+        students who left every group at least FORMER_GRACE ago (former_cleanup)."""
         admins = set(self.db.admins())
         members = self.db.members()
         students = {e.lower() for ems in members.values() for e in ems} - admins
         active_groups = {b["group_id"] for b in rep.active}
         entitled = {e.lower() for gid in active_groups for e in members.get(gid, [])}
         cap = int(self.db.setting("max_devices_per_student") or "2")
+        cutoff = (self.clock() - FORMER_GRACE).isoformat(timespec="seconds")
+        former = {r["email"] for r in self.db.q("SELECT email FROM former_members WHERE since <= ?", (cutoff,))}
+        former -= admins | students
 
-        doomed: list[Node] = []
+        doomed: list[tuple[Node, str, str]] = []  # (device, switch that allows removing it, label suffix)
         by_owner: dict[str, list[Node]] = {}
+        leavers = 0
         for n in nodes:
-            if n.tagged or n.owner not in students:
-                continue  # lab PCs, admins and non-roster users are never touched
-            if n.owner not in entitled:
-                doomed.append(n)
+            if n.tagged:
+                continue  # lab PCs are never touched
+            if n.owner in former:
+                leavers += 1
+                if leavers <= FORMER_PER_RUN or not self.db.flag("former_cleanup"):
+                    doomed.append((n, "former_cleanup", ", in no group"))
+            elif n.owner not in students:
+                continue  # admins and people never on a roster are never touched
+            elif n.owner not in entitled:
+                doomed.append((n, "device_cleanup", ""))
             else:
                 by_owner.setdefault(n.owner, []).append(n)
         for owner, devs in by_owner.items():
             devs.sort(key=lambda n: n.last_seen or n.created, reverse=True)
-            doomed.extend(devs[cap:])
+            doomed.extend((n, "device_cleanup", "") for n in devs[cap:])
 
-        for n in doomed:
-            label = f"{n.name} ({n.owner}, id {n.id})"
-            if not self.db.flag("device_cleanup"):
+        for n, switch, why in doomed:
+            label = f"{n.name} ({n.owner}, id {n.id}{why})"
+            if not self.db.flag(switch):
                 rep.would_delete.append(label)
                 continue
             try:

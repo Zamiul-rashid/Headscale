@@ -17,8 +17,9 @@
     <h2>Application</h2>
     <dl class="facts">
       <dt>Thesis</dt><dd>{{ e.thesis_title }}</dd>
-      <dt>Supervisor</dt><dd>{{ e.supervisor }}</dd>
-      {% if e.co_supervisor %}<dt>Co-supervisor</dt><dd>{{ e.co_supervisor }}</dd>{% endif %}
+      {% for s in e.supervisors %}
+      <dt>{{ 'Supervisor' if loop.first else 'Co-supervisor' }}</dt><dd>{{ s.name }}{% if s.email %} · <a href="mailto:{{ s.email }}">{{ s.email }}</a>{% endif %}</dd>
+      {% endfor %}
       <dt>Hardware needs</dt><dd>{{ e.hardware or '—' }}</dd>
       {% if e.notes %}<dt>Notes</dt><dd>{{ e.notes }}</dd>{% endif %}
     </dl>

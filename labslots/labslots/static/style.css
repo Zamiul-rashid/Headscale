@@ -41,6 +41,7 @@ body {
   caret-color: var(--blue);
 }
 ::selection { background: var(--blue-tint); color: var(--ink); }
+[hidden] { display: none !important; }  /* the attribute always wins over a component's display */
 a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
@@ -319,9 +320,36 @@ details.members summary { cursor: pointer; font-weight: 600; color: var(--blue);
 details.members .sheet { margin-top: var(--s2); border: 1px solid var(--rule-soft); border-radius: var(--radius); }
 fieldset.memberset { border: 0; padding: 0; margin: 0; min-width: 0; }
 fieldset.memberset legend { font-weight: 700; font-size: var(--t-sm); padding: 0; margin-bottom: var(--s1); }
-.member-table { border: 1px solid var(--rule); border-radius: var(--radius); }
-.member-table td { padding: var(--s1) var(--s2); }
-.member-table td:first-child { width: 32px; text-align: center; }
+/* enrolment form: each part has its heading and hint on the left, its fields on the right */
+.enroll-form { max-width: 960px; }
+.formpart { border: 0; margin: 0; padding: var(--s5) 0; min-width: 0; border-top: 1px solid var(--rule-soft);
+  display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--s3) var(--s6); }
+.enroll-form > h2 + .formpart { border-top: 0; padding-top: var(--s2); }
+.formpart-head h3 { margin: 6px 0 0; font-size: var(--t-sm); }
+.formpart-head .hint { margin: var(--s1) 0 0; line-height: 1.45; }
+.formpart-body { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
+.form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); padding-top: var(--s5); border-top: 1px solid var(--rule-soft); }
+.form-actions .hint { margin: 0; }
+/* supervisors and members: one ruled table each; on a phone every row becomes labelled fields */
+.person-table { border: 1px solid var(--rule); border-radius: var(--radius); table-layout: fixed; }
+.person-table tbody td { padding: var(--s1) var(--s2); border-bottom: 0; border-top: 1px solid var(--rule-soft); }
+.person-table tbody tr:first-child td { border-top: 0; }
+.person-table tbody tr:hover > td { background: none; }
+.person-table td.role { font-size: var(--t-xs); color: var(--ink-2); white-space: nowrap; }
+.person-table th:first-child { width: 112px; }
+.person-table th:nth-child(3) { width: 42%; }
+.person-table th:nth-child(4) { width: 84px; }
+.person-table td.act { text-align: right; }
+.member-table th:first-child { width: 40px; }
+.member-table th:nth-child(3) { width: 112px; }
+.member-table th:nth-child(4) { width: 44%; }
+.member-table td.role { text-align: center; }
+.cell-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+input.cellinput.locked { background: var(--panel); border-color: var(--rule-soft); color: var(--ink-2); }
+.suffixed { display: flex; min-width: 0; }
+.suffixed input { min-width: 0; border-radius: var(--radius) 0 0 var(--radius); }
+.suffixed .suffix { display: flex; align-items: center; padding: 0 var(--s2); border: 1px solid #8995a2; border-left: 0;
+  border-radius: 0 var(--radius) var(--radius) 0; background: var(--panel); color: var(--ink-2); font-size: var(--t-sm); white-space: nowrap; }
 .label-text { display: block; font-size: var(--t-sm); font-weight: 600; margin-bottom: var(--s1); }
 table.mini.picker td.pick { text-align: center; padding: var(--s1); height: 44px; }
 .pickbox { flex-direction: row; justify-content: center; align-items: center; gap: var(--s2); min-height: 36px; font-weight: 400; cursor: pointer; border-radius: 2px; }
@@ -362,11 +390,19 @@ table.mini.picker td.pick { text-align: center; padding: var(--s1); height: 44px
   .btn.small { min-height: 40px; padding: var(--s2) var(--s4); font-size: var(--t-sm); }
   .assignment { grid-template-columns: 1fr; }
   .assign-pc { border-right: 0; border-bottom: 2px solid var(--rule); padding: 0 0 var(--s3); }
-  .member-table thead { display: none; }
-  .member-table, .member-table tbody, .member-table tr, .member-table td { display: block; width: 100%; }
-  .member-table tr { padding: var(--s2); border-bottom: 1px solid var(--rule-soft); display: grid; grid-template-columns: 24px 1fr; gap: var(--s1) var(--s2); }
-  .member-table td { border: 0; padding: 0; }
-  .member-table td:first-child { grid-row: span 3; width: auto; padding-top: 6px; }
+  .formpart { grid-template-columns: 1fr; padding: var(--s4) 0; }
+  .formpart-head h3 { margin-top: 0; }
+  .person-table thead { display: none; }
+  .person-table, .person-table tbody, .person-table tr, .person-table td { display: block; width: 100%; }
+  .person-table tbody tr { padding: var(--s3); border-top: 1px solid var(--rule-soft); }
+  .person-table tbody tr:first-child { border-top: 0; }
+  .person-table tbody td, .person-table tbody tr:first-child td { border: 0; padding: 0 0 var(--s2); }
+  .person-table td.role { font-weight: 700; font-size: var(--t-sm); color: var(--ink); text-align: left; }
+  .member-table td.role::before { content: "Member "; }
+  .person-table td.act { text-align: left; padding: 0; }
+  .cell-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal;
+    display: block; margin-bottom: 2px; font-size: var(--t-xs); font-weight: 400; color: var(--ink-3); }
+  .person-table input.cellinput { min-height: 40px; font-size: var(--t-md); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 
@@ -376,7 +412,6 @@ table.mini.picker td.pick { text-align: center; padding: var(--s1); height: 44px
 .search output { font-size: var(--t-xs); color: var(--ink-3); white-space: nowrap; }
 .dayhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); margin: 0 0 var(--s3); }
 .occ-line { margin: 0; color: var(--ink-2); }
-[data-search][hidden] { display: none !important; }
 table.daytable td { vertical-align: middle; }
 table.daytable td.livecell { box-shadow: inset 3px 0 0 var(--blue); background: var(--blue-tint); }
 table.daytable .free, .nowtable .free { color: var(--green); font-weight: 600; }

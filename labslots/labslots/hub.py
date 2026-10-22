@@ -18,8 +18,8 @@ from datetime import datetime, timedelta
 from .db import DB, now_iso
 
 SERVER_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,30}$")
-SLICE_SETTINGS = ("enforce_policy", "device_cleanup", "ssh_enforce", "max_devices_per_student",
-                  "slot_ports", "extra_grants")
+SLICE_SETTINGS = ("enforce_policy", "device_cleanup", "former_cleanup", "ssh_enforce", "max_devices_per_student",
+                  "slot_ports", "extra_grants", "extra_ssh")
 STALE_AFTER = timedelta(minutes=2)
 
 
@@ -75,10 +75,15 @@ def server_slice(db: DB, server: str) -> dict:
     return body
 
 
-def apply_slice(db: DB, s: dict) -> None:
-    """Make an agent's SQLite match a slice. Keeps pc_state (what each PC runs) for PCs that stay."""
+def apply_slice(db: DB, s: dict, now: datetime | None = None) -> None:
+    """Make an agent's SQLite match a slice. Keeps pc_state (what each PC runs) for PCs that stay.
+
+    Students who drop off this server's roster (their group, its term or all its slots were removed
+    from the Sheet) are remembered in former_members, so the Enforcer can remove their devices."""
+    since = (now or datetime.now()).isoformat(timespec="seconds")
     with db.tx():
         c = db.conn
+        before = {r["email"] for r in c.execute("SELECT email FROM members")}
         for k, v in s["settings"].items():
             c.execute("INSERT INTO settings(key, value) VALUES (?, ?) "
                       "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (k, v))
@@ -111,6 +116,10 @@ def apply_slice(db: DB, s: dict) -> None:
                       "requested_at) VALUES (?, ?, ?, ?, ?, ?, 'approved', 'hub', '')",
                       [(b["id"], b["term_id"], b["pc_id"], b["group_id"], b["weekday"], b["half"])
                        for b in s["bookings"]])
+        stay = {m.lower() for g in s["groups"] for m in g["members"]} | {a.lower() for a in s["admins"]}
+        c.executemany("INSERT OR IGNORE INTO former_members(email, since) VALUES (?, ?)",
+                      [(e, since) for e in sorted({e.lower() for e in before} - stay)])
+        c.executemany("DELETE FROM former_members WHERE email = ?", [(e,) for e in stay])
 
 
 def store_report(db: DB, server: str, report: dict) -> None:

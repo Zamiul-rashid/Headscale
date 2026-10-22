@@ -65,7 +65,7 @@ class Agent:
             self.hub_error = str(e)[:300]
             return False
         if s.get("version") != self.db.setting("slice_version"):
-            apply_slice(self.db, s)
+            apply_slice(self.db, s, self.enforcer.clock())
             self.db.set_setting("slice_version", s.get("version", ""))
         self.db.set_setting("slice_at", now_iso())
         self.db.set_setting("hub_force", s.get("force", "0"))
