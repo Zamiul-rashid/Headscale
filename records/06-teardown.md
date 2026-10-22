@@ -56,5 +56,5 @@ file.
 ## Left for you
 
 - Optional: delete the three old OPNsense backups (see 01-environment.md).
-- The passwords shared in chat (`prova` and others) are used on several machines; consider changing them.
+- The passwords shared in chat are used on several machines; consider changing them.
 - Harmless: enigma's `~/.ssh/known_hosts` gained entries for the laptop and the simulation CTs' IPs.

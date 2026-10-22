@@ -1,5 +1,0 @@
-[Unit]
-Description=hs-sim soak sample (Headscale pilot simulation)
-[Service]
-Type=oneshot
-ExecStart=%h/Code/Del-later/lab-headscale-pilot/sim/tests/collect.sh

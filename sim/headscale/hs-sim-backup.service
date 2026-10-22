@@ -1,5 +1,0 @@
-[Unit]
-Description=hs-sim nightly Headscale backup (restic)
-[Service]
-Type=oneshot
-ExecStart=/usr/local/sbin/hs-sim-backup

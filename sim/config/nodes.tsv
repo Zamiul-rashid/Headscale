@@ -1,7 +1,0 @@
-lab-a-01	labpc	ssh	server0	tag:labpc	labadmin
-lab-b-01	labpc	pct	server1:804	tag:labpc	labadmin
-lab-b-02	labpc	pct	server1:805	tag:labpc,tag:gpu	labadmin
-alice-laptop	researcher	docker	laptop:hs-sim-alice	-	alice
-bob-enigma	researcher	docker	hs-sim-bob	-	bob
-admin-enigma	admin	docker	hs-sim-admin	-	admin1
-alice-home	researcher	docker	hs-sim-alice-home	-	alice

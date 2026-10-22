@@ -1,6 +1,6 @@
 # Headscale pilot — home-lab rehearsal record
 
-On 2026-10-13 we rehearsed the 15-PC lab Headscale pilot (see `../README.md`) on the home network,
+On 2026-10-13 we rehearsed the 15-PC lab Headscale pilot (see `../proposal/`) on the home network,
 ran its tests, and then removed everything. This folder is the written record of that run.
 
 **Status:** torn down on 2026-10-13. Every machine was checked against its pre-simulation state
@@ -22,10 +22,11 @@ is not running anywhere: your original CT 101 is stopped and does not start at b
 
 ## Where the detail lives
 
-- Plan: `../docs/superpowers/plans/2026-10-13-headscale-home-sim.md`
-- Code, tests and runbook: `../sim/` (`../sim/README.md`)
-- Raw results: `../sim/results/` (CSV files, `report.md`, `notes.md`)
-- Every change made, with its undo command: `../sim/ledger/ledger.tsv`
-- Git history on branch `hs-sim`: one commit per task, plus the review fixes and the final snapshot
+The rehearsal's code (`sim/`) and its plan (`docs/superpowers/plans/2026-10-13-headscale-home-sim.md`) were
+removed from the tree once the pilot moved on; they are in git history up to commit `0439a74`
+(`git show 0439a74:sim/README.md`). Paths in these records such as `../sim/results/` refer to that tree.
 
-The simulation can be rebuilt from `../sim/README.md` ("Build order").
+- Code, tests and runbook: `sim/` (`sim/README.md`, "Build order" rebuilds the simulation)
+- Raw results: `sim/results/` (CSV files, `report.md`, `notes.md`)
+- Every change made, with its undo command: `sim/ledger/ledger.tsv`
+- One commit per task, plus the review fixes and the final snapshot: commits `17b05d7`..`13b1753`
