@@ -93,7 +93,7 @@ inbound ports (three with HTTP) and a lab email account} (Section~\ref{sec:uni})
 % ---------------------------------------------------------------------------
 \section{Background and Goals}
 
-Each thesis group is assigned two 12-hour slots per week on a lab PC and works
+Each thesis group is assigned two slots of just under 12 hours per week on a lab PC and works
 remotely through AnyDesk. The slots exist only on paper. AnyDesk connects
 through AnyDesk's own servers, so anyone who knows a PC's ID and password can
 connect whenever they like. That person can stop another group's training run,
@@ -260,8 +260,9 @@ the access policy and one Linux account on its PC (\code{grp-<code>}).
 ``Sharing'' a PC with a group is a policy grant that exists only during the
 group's slot. The PC cannot start connections back to the students.
 
-Each PC has 14 slots per week, \textbf{08:00--20:00} and
-\textbf{20:00--08:00} every day. Each group normally gets two slots on
+Each PC has 14 slots per week, \textbf{06:00--17:55} and
+\textbf{18:00--05:55} every day. Each slot ends five minutes before the next
+one starts; that switch-over belongs to no group. Each group normally gets two slots on
 different days (Table~\ref{tab:slots}). The routine is kept in a
 \textbf{Google Sheet}: one \emph{Routine} tab per term with a row per PC and a
 column per slot, where an admin types a group's code, and tabs for groups,
@@ -271,15 +272,18 @@ the Sheet's \emph{Problems} tab, and if Google cannot be reached the system
 keeps enforcing its last good copy.
 
 The \textbf{slot agent} runs next to Headscale and acts every 15 seconds, so a
-missed boundary (a restart, an outage) is put right on the next run:
+missed boundary (a restart, an outage) is put right on the next run. At the end
+of a slot it closes the slot first and lets the next group in only when its
+slot starts, five minutes later:
 \begin{enumerate}[leftmargin=1.6em]
-  \item it writes the policy for the current slot and loads it through
-        Headscale's API. All 15 PCs change in one update. Network access and
+  \item it writes the policy for the current slot (in the switch-over: no
+        group) and loads it through Headscale's API. All 15 PCs change in one update. Network access and
         Tailscale SSH logins change here, and each PC ends the outgoing group's
         open sessions itself;
   \item it logs in to each PC as the scheduler node over Tailscale SSH and
-        runs \code{slot-switch}, which makes the incoming group's account the
-        only active one and stops the outgoing group's processes;
+        runs \code{slot-switch}, which stops the outgoing group's processes
+        and, once the next slot starts, makes the incoming group's account the
+        only active one;
   \item on any error, it loads an admins-only policy, so access fails closed.
         Having no policy at all would allow everything.
 \end{enumerate}
@@ -293,8 +297,8 @@ maintenance slot.}
 \toprule
  & Mon & Tue & Wed & Thu & Fri & Sat & Sun \\
 \midrule
-08:00--20:00 & A & C & E & A & C & E & \cellcolor{gray!15}\textit{maint.} \\
-20:00--08:00 & B & D & F & B & D & F & \textit{spare} \\
+06:00--17:55 & A & C & E & A & C & E & \cellcolor{gray!15}\textit{maint.} \\
+18:00--05:55 & B & D & F & B & D & F & \textit{spare} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -305,7 +309,7 @@ maintenance slot.}
 "grants": [
   { "src": ["group:admins"], "dst": ["tag:pc-01", ...], "ip": ["*"] },
   { "src": ["tag:scheduler"], "dst": ["tag:pc-01", ...], "ip": ["tcp:22"] },
-  // generated for the current slot (Mon 08:00-20:00): pc-01 shared with Group A
+  // generated for the current slot (Mon 06:00-17:55): pc-01 shared with Group A
   { "src": ["group:thesis-a"], "dst": ["tag:pc-01"], "ip": ["tcp:22"] } ],
 "ssh": [
   { "action": "accept", "src": ["group:thesis-a"], "dst": ["tag:pc-01"],
