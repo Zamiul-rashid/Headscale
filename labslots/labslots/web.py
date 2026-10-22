@@ -300,7 +300,6 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
                     next=nxt.isoformat(), today=clock().date(), current=slot_at(clock()),
                     legend=[g for g in db.groups() if g["id"] in shown])
 
-    # -- requests queue --------------------------------------------------------------------
     # -- PCs -------------------------------------------------------------------------------
     @r.get("/pcs", response_class=HTMLResponse)
     async def pcs_page(request: Request):
@@ -711,26 +710,26 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
             for p_ in problems:
                 flash(request, p_, "err")
             return back(f"/enrolments/{eid}")
-        if True:  # the Sheet is the source of truth: write there, then read it back
-            t_ = db.one("SELECT name FROM terms WHERE id = ?", (term_id,))["name"]
-            tag_ = db.one("SELECT tag FROM pcs WHERE id = ?", (pc_id,))["tag"]
-            group_ = {"slug": slug, "name": e["group_name"], "short": short, "color": color,
-                      "notes": f"{e['thesis_title']} · supervisor {e['supervisor']}",
-                      "members": [m["email"] for m in e["members"]]}
-            try:
-                rep = await _in_thread(lambda: sync.assign(group_, t_, tag_, slots))
-            except AssignError as err:
-                flash(request, str(err), "err")
-                return back(f"/enrolments/{eid}")
-            row_ = db.one("SELECT id FROM groups WHERE slug = ?", (slug,))
-            if not rep.ok or not row_:
-                flash(request, "Written to the Sheet, but reading it back failed: " + (rep.error or "group missing")
-                      + ". Check the Problems tab, then try again.", "err")
-                return back(f"/enrolments/{eid}")
-            gid = row_["id"]
-            db.x("UPDATE enrolments SET status = 'approved', decided_by = ?, decided_at = ?, "
-                 "decision_note = ?, group_id = ? WHERE id = ?",
-                 (who, now_iso(), (f.get("note") or "").strip()[:500], gid, eid))
+        # The Sheet is the source of truth: write there, then read it back.
+        t_ = db.one("SELECT name FROM terms WHERE id = ?", (term_id,))["name"]
+        tag_ = db.one("SELECT tag FROM pcs WHERE id = ?", (pc_id,))["tag"]
+        group_ = {"slug": slug, "name": e["group_name"], "short": short, "color": color,
+                  "notes": f"{e['thesis_title']} · supervisor {e['supervisor']}",
+                  "members": [m["email"] for m in e["members"]]}
+        try:
+            rep = await _in_thread(lambda: sync.assign(group_, t_, tag_, slots))
+        except AssignError as err:
+            flash(request, str(err), "err")
+            return back(f"/enrolments/{eid}")
+        row_ = db.one("SELECT id FROM groups WHERE slug = ?", (slug,))
+        if not rep.ok or not row_:
+            flash(request, "Written to the Sheet, but reading it back failed: " + (rep.error or "group missing")
+                  + ". Check the Problems tab, then try again.", "err")
+            return back(f"/enrolments/{eid}")
+        gid = row_["id"]
+        db.x("UPDATE enrolments SET status = 'approved', decided_by = ?, decided_at = ?, "
+             "decision_note = ?, group_id = ? WHERE id = ?",
+             (who, now_iso(), (f.get("note") or "").strip()[:500], gid, eid))
         pc_name = db.one("SELECT name FROM pcs WHERE id = ?", (pc_id,))["name"]
         db.audit(who, "enrolment-approved", f"#{eid} {e['group_name']} -> {pc_name}: "
                  + ", ".join(slot_text(*s_) for s_ in slots))

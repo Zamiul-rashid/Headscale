@@ -301,22 +301,3 @@ class Enforcer:
         normal = next_slot(slot_at(self.clock())).start
         return min(rot["next_change"], normal) if rot else normal
 
-
-def run_forever(enforcer: Enforcer, interval: float, stop: threading.Event, sync=None) -> None:
-    last_pull = 0.0
-    while not stop.is_set():
-        if sync is not None and time.monotonic() - last_pull >= interval - 1:
-            last_pull = time.monotonic()  # the Sheet is read every interval, even during a fast test rotation
-            try:
-                rep = sync.pull()
-                if not rep.ok:
-                    log.warning("sheet sync failed, enforcing the last good copy: %s", rep.error)
-            except Exception:  # noqa: BLE001
-                log.exception("sheet sync crashed")
-        try:
-            rep = enforcer.reconcile()
-            if rep.errors:
-                log.warning("reconcile errors: %s", rep.errors)
-        except Exception:  # noqa: BLE001
-            log.exception("reconcile crashed")
-        stop.wait(5 if enforcer.db.setting("test_rotation") else interval)  # fast checks while a test is set

@@ -1,4 +1,4 @@
-"""Slot arithmetic for the weekly 12-hour schedule in proposal.tex.
+"""Slot arithmetic for the weekly 12-hour schedule in the proposal (proposal/proposal.tex).
 
 Every PC has 14 slots a week: a day slot 08:00-20:00 and a night slot
 20:00-08:00 (next morning) on each weekday. A night slot belongs to the

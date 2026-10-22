@@ -107,10 +107,10 @@ def apply_slice(db: DB, s: dict, now: datetime | None = None) -> None:
                       "ssh_enabled = excluded.ssh_enabled, notes = excluded.notes, server = excluded.server",
                       (p["id"], p["name"], p["tag"], p["ssh_enabled"], p.get("notes", ""), p.get("server", "")))
         for g in s["groups"]:
-            c.execute("INSERT INTO groups(id, name, slug, linux_account, color, short, ssh_keys, notes) "
-                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            c.execute("INSERT INTO groups(id, name, slug, linux_account, color, short, notes) "
+                      "VALUES (?, ?, ?, ?, ?, ?, ?)",
                       (g["id"], g["name"], g["slug"], g["linux_account"], g["color"], g.get("short", ""),
-                       g.get("ssh_keys", ""), g.get("notes", "")))
+                       g.get("notes", "")))
             c.executemany("INSERT INTO members(group_id, email) VALUES (?, ?)", [(g["id"], m) for m in g["members"]])
         c.executemany("INSERT INTO bookings(id, term_id, pc_id, group_id, weekday, half, status, requested_by, "
                       "requested_at) VALUES (?, ?, ?, ?, ?, ?, 'approved', 'hub', '')",

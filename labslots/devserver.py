@@ -28,10 +28,9 @@ db.x("INSERT INTO terms(name, start_date, end_date) VALUES ('Fall 2026 pilot', '
 colors = ["#ffe08a", "#b8e6b0", "#f7c6d9", "#bcdcf5", "#ffd0a6", "#d9ccf2"]
 gids = []
 for i, letter in enumerate("abcdef"):
-    gid = db.x("INSERT INTO groups(name, slug, linux_account, color, short, ssh_keys) VALUES (?, ?, ?, ?, ?, ?)",
+    gid = db.x("INSERT INTO groups(name, slug, linux_account, color, short) VALUES (?, ?, ?, ?, ?)",
                (f"Thesis {letter.upper()} (example)", f"thesis-{letter}", f"grp-thesis-{letter}", colors[i],
-                f"TH-{letter.upper()}",
-                "ssh-ed25519 AAAAexample student@laptop" if i % 2 == 0 else ""))
+                f"TH-{letter.upper()}"))
     for n in range(5):
         db.x("INSERT INTO members(group_id, email) VALUES (?, ?)", (gid, f"{letter}{n + 1}.student@g.bracu.ac.bd"))
     gids.append(gid)
@@ -39,7 +38,7 @@ pcs = []
 for name, tag, ssh in (("pc-25", "tag:pc25", 1), ("pc-41", "tag:pc-41", 1), ("pc-43", "tag:pc-43", 0),
                        ("pc-44", "tag:pc-44", 0), ("pc-45", "tag:pc-45", 0)):
     pcs.append(db.x("INSERT INTO pcs(name, tag, ssh_enabled) VALUES (?, ?, ?)", (name, tag, ssh)))
-# proposal.tex weekly table (A C E / B D F, Sunday maintenance), shifted per PC
+# the proposal's weekly table (A C E / B D F, Sunday maintenance), shifted per PC
 day, night = [0, 2, 4, 0, 2, 4], [1, 3, 5, 1, 3, 5]
 for k, pc in enumerate(pcs):
     for wd in range(6):
@@ -83,9 +82,8 @@ nodes = [Node(id="5", name="pc25", owner="", tags=["tag:pc25"], online=True, ips
 hs = FakeHeadscale(nodes)
 clock = Clock(datetime(2026, 10, 17, 16, 0))
 cfg = Config(db_path=str(tmp / "demo.db"), base_path="/slots", public_url="http://127.0.0.1:8765",
-             headscale_url="", headscale_api_key="", oidc_issuer="", oidc_client_id="", oidc_client_secret="",
-             session_secret="demo-only", bootstrap_admins=[], ssh_user="labsched",
-             ssh_socks="", interval=30, dev_login=True, run_scheduler=False)
+             oidc_issuer="", oidc_client_id="", oidc_client_secret="",
+             session_secret="demo-only", bootstrap_admins=[], interval=30, dev_login=True, run_scheduler=False)
 app = create_app(cfg, db=db, clock=clock, sheet=FakeSheets())
 app.state.sync.pull()
 # one slot agent, talking to the hub in-process, so the Now and PCs pages have live-looking reports

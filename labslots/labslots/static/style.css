@@ -156,7 +156,6 @@ tr.errrow > td { background: var(--red-tint); }
 .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; background: var(--mark); vertical-align: -1px; border: 1px solid rgba(21,32,43,.25); }
 
 /* ---------- the routine grid ---------- */
-.routine-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--s5); align-items: start; }
 table.routine { border-collapse: separate; border-spacing: 0; width: 100%; font-size: var(--t-sm); table-layout: fixed; }
 table.routine col.pccol { width: 128px; }
 table.routine th, table.routine td { border-right: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); padding: 0; }
@@ -174,37 +173,20 @@ table.routine thead tr.days th.today small, table.routine thead tr.halves th.tod
 table.routine td.today { background: var(--blue-tint); }
 table.routine tbody tr:last-child > * { border-bottom: 0; }
 
-td.cell { height: 48px; padding: var(--s1); cursor: pointer; vertical-align: middle; text-align: center; }
+td.cell { height: 48px; padding: var(--s1); vertical-align: middle; text-align: center; }
 td.cell .stackmarks { transition: opacity .18s cubic-bezier(.2, .7, .2, 1); }
-td.cell:hover { box-shadow: inset 0 0 0 2px var(--blue); }
 td.cell.free::after { content: ""; display: block; width: 8px; height: 1px; margin: 0 auto; background: var(--rule-soft); }
 td.cell .stackmarks { display: flex; flex-direction: column; gap: 2px; align-items: center; }
 td.cell.live { background: var(--blue) !important; }
 td.cell.live .code-mark:not(.pending) { background: var(--blue-ink); color: var(--blue); }
 td.cell.live .code-mark.pending { color: var(--blue-ink); outline-color: var(--blue-soft); }
 td.cell.live.free::after { background: var(--blue-soft); }
-td.cell.clash { box-shadow: inset 0 0 0 2px var(--red); }
-td.cell .cellerr { display: block; color: var(--red); font-size: var(--t-xs); font-weight: 600; line-height: 1.25; margin-top: 2px; white-space: normal; }
-td.cell.selected { box-shadow: inset 0 0 0 2px var(--ink); }
-td.cell.live:hover, td.cell.live.selected { box-shadow: inset 0 0 0 2px var(--blue-ink), inset 0 0 0 4px var(--ink); }
 .key { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin-top: var(--s3); font-size: var(--t-xs); color: var(--ink-2); }
 .key span { display: inline-flex; align-items: center; gap: 6px; }
 .key .sample-live { width: 14px; height: 14px; background: var(--blue); border-radius: 2px; }
-.key .sample-today { width: 14px; height: 14px; background: var(--blue-tint); border: 1px solid var(--rule-soft); border-radius: 2px; }
 
-/* highlighter marking: the legend is the control */
-.legend { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin: 0 0 var(--s3); min-width: 0; border: 0; padding: 0; }
-.legend .legend-label { font-size: var(--t-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); margin-right: var(--s1); }
-.legend input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.legend label { flex-direction: row; align-items: center; gap: 6px; padding: 5px var(--s3) 5px var(--s2); border: 1px solid var(--rule-soft); border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: var(--t-xs); background: var(--sheet); }
-.legend label:hover { border-color: var(--ink-2); }
-.legend input:checked + label { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-.legend input:focus-visible + label { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* cell editor docked right */
-.editor { position: sticky; top: 112px; background: var(--panel); border-radius: var(--radius); padding: var(--s4); scroll-margin-top: 104px; }
-.editor h3 { margin-top: 0; font-size: var(--t-lg); }
-.editor .empty { color: var(--ink-2); }
 .booking { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); display: flex; flex-direction: column; gap: var(--s2); }
 .booking:first-of-type { border-top: 1px solid var(--rule-soft); }
 .booking .meta { font-size: var(--t-xs); color: var(--ink-2); }
@@ -225,8 +207,6 @@ table.mini tbody tr:last-child > * { border-bottom: 0; }
 .swipe-hint { font-size: var(--t-xs); color: var(--ink-3); margin: 0 0 var(--s2); }
 
 /* calendar */
-table.routine.calendar td.cell, table.mini.calendar td.cell { cursor: default; }
-table.routine.calendar td.cell:hover, table.mini.calendar td.cell:hover { box-shadow: none; }
 td.cell.noterm { background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(21,32,43,.07) 4px 5px); }
 
 .calbar { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; margin: 0 0 var(--s4); }
@@ -290,9 +270,6 @@ td.cell.noterm { background-image: repeating-linear-gradient(135deg, transparent
   .mcal-day .more-word { display: none; }
 }
 
-.key .sample-half { display: inline-flex; flex-direction: column; gap: 1px; width: 14px; }
-.key .sample-half i { display: block; height: 6px; background: #ffe08a; border-radius: 1px; }
-.key .sample-half i + i { background: #bcdcf5; }
 .key .sample-noterm { width: 14px; height: 14px; border: 1px solid var(--rule-soft); border-radius: 2px;
   background-image: repeating-linear-gradient(135deg, transparent 0 3px, rgba(21,32,43,.2) 3px 4px); }
 
@@ -363,10 +340,6 @@ table.mini.picker td.pick { text-align: center; padding: var(--s1); height: 44px
 .signin h1 { margin-bottom: var(--s2); }
 
 /* ---------- responsive ---------- */
-@media (max-width: 1100px) {
-  .routine-layout { grid-template-columns: minmax(0, 1fr); }
-  .editor { position: static; }
-}
 @media (max-width: 760px) {
   .shell-in { flex-wrap: wrap; gap: 0 var(--s3); padding: 0 var(--s4); }
   .brand { flex: 1 1 auto; }
@@ -376,8 +349,6 @@ table.mini.picker td.pick { text-align: center; padding: var(--s1); height: 44px
   main { padding-top: var(--s4); }
   h1 { font-size: var(--t-xl); }
   .routine-desktop { display: none; }
-  .legend { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-left: calc(-1 * var(--s4)); margin-right: calc(-1 * var(--s4)); padding: 2px var(--s4); }
-  .legend label { white-space: nowrap; }
   .pc-pages { display: flex; gap: var(--s4); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 calc(-1 * var(--s4)); padding: 0 var(--s4) var(--s2); }
   .pc-page { flex: 0 0 100%; scroll-snap-align: center; }
   table.sheet { font-size: var(--t-sm); }

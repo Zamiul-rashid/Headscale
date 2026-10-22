@@ -61,7 +61,6 @@ def test_sheet_edits_flow_into_sqlite(db):
     assert db.one("SELECT ssh_enabled FROM pcs WHERE name = 'pc-43'")["ssh_enabled"] == 1
     assert db.one("SELECT 1 FROM terms WHERE name = 'Spring 2027'")
     assert routine_tab("Spring 2027") in sheet.tabs          # a new term gets its routine tab
-    assert db.one("SELECT ssh_keys FROM groups WHERE slug = 'thesis-a'")["ssh_keys"]  # keys live in SQLite
     assert db.one("SELECT COUNT(*) AS n FROM audit WHERE action = 'sheet-sync'")["n"] == n0 + 1
 
 

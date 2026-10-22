@@ -54,9 +54,8 @@ nodes = [Node(id=str(100 + k), name=f"pc-{k}", owner="", tags=[f"tag:pc-{k}"], o
               ips=[f"100.64.1.{k}"]) for k in range(1, 71)]
 clock = Clock(datetime(2026, 10, 22, 14, 0))
 cfg = Config(db_path=str(tmp / "demo.db"), base_path="/slots", public_url="http://127.0.0.1:8766",
-             headscale_url="", headscale_api_key="", oidc_issuer="", oidc_client_id="", oidc_client_secret="",
-             session_secret="demo-only", bootstrap_admins=[], ssh_user="labsched",
-             ssh_socks="", interval=30, dev_login=True, run_scheduler=False)
+             oidc_issuer="", oidc_client_id="", oidc_client_secret="",
+             session_secret="demo-only", bootstrap_admins=[], interval=30, dev_login=True, run_scheduler=False)
 app = create_app(cfg, db=db, clock=clock, sheet=FakeSheets())
 app.state.sync.pull()
 db.set_setting("ssh_enforce", "1")

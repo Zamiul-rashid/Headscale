@@ -61,8 +61,8 @@ def seed(db):
     """Two groups, two PCs, a term covering Oct 2026, Monday bookings."""
     db.x("INSERT OR IGNORE INTO admins(email, added_at, added_by) VALUES ('boss@bracu.ac.bd', 'x', 'test')")
     db.x("INSERT INTO terms(name, start_date, end_date) VALUES ('T', '2026-10-01', '2026-12-31')")
-    a = db.x("INSERT INTO groups(name, slug, linux_account, color, ssh_keys) VALUES "
-             "('Thesis A', 'thesis-a', 'grp-thesis-a', '#ffcccc', 'ssh-ed25519 AAAAA a@x')")
+    a = db.x("INSERT INTO groups(name, slug, linux_account, color) VALUES "
+             "('Thesis A', 'thesis-a', 'grp-thesis-a', '#ffcccc')")
     b = db.x("INSERT INTO groups(name, slug, linux_account) VALUES ('Thesis B', 'thesis-b', 'grp-thesis-b')")
     db.x("INSERT INTO members(group_id, email) VALUES (?, 'alice@g.bracu.ac.bd')", (a,))
     db.x("INSERT INTO members(group_id, email) VALUES (?, 'bob@g.bracu.ac.bd')", (b,))

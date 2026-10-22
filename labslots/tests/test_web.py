@@ -14,10 +14,8 @@ ORIGIN = {"origin": "http://testserver"}
 
 def cfg(tmp_path):
     return Config(db_path=str(tmp_path / "w.db"), base_path="/slots", public_url="http://testserver",
-                  headscale_url="", headscale_api_key="", oidc_issuer="", oidc_client_id="",
-                  oidc_client_secret="", session_secret="test-secret", bootstrap_admins=["boss@bracu.ac.bd"],
-                  ssh_user="labsched", ssh_socks="", interval=30,
-                  dev_login=True, run_scheduler=False)
+                  oidc_issuer="", oidc_client_id="", oidc_client_secret="", session_secret="test-secret",
+                  bootstrap_admins=["boss@bracu.ac.bd"], interval=30, dev_login=True, run_scheduler=False)
 
 
 def client(tmp_path, seeded=True):
@@ -73,7 +71,7 @@ def test_editing_moved_to_the_sheet(tmp_path):
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
     for path in ("/slots/terms", "/slots/grid/cell", "/slots/pcs", "/slots/settings/admins", "/slots/groups/1/delete"):
         assert c.post(path, data={"name": "X"}, headers=ORIGIN).status_code in (404, 405), path
-    assert c.post("/slots/groups/1", data={"ssh_keys": "x"}, headers=ORIGIN).status_code == 405
+    assert c.post("/slots/groups/1", data={"name": "x"}, headers=ORIGIN).status_code == 405
 
 
 def test_cross_site_post_refused(tmp_path):
