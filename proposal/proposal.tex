@@ -73,38 +73,39 @@
 \vspace{-0.4em}
 \suppressfloats[t]
 
-\textbf{Summary.} Every thesis group already has booked slots on our lab PCs,
-but nothing enforces them. Groups work remotely through AnyDesk, and anyone with
-a PC's AnyDesk details can connect at any time. We have built a system that
-enforces the slots, and tested it. A self-hosted Headscale server (an
-open-source control server for the Tailscale/WireGuard VPN) admits only
-students who sign in with their BRACU Google account. The lab's weekly routine
-stays in a Google Sheet. Our slot system, \textbf{labslots}, reads it every 30
-seconds; at each slot change it rewrites the network policy and switches the
-PC to the incoming group's account, so only the group in its slot can reach its
-PC. Every login to a lab PC uses Tailscale SSH, so there are no keys or
-passwords to hand out or take back. The system already runs on our own hardware
-with three lab PCs. In a test with 871 simulated devices on a 4-core server,
-every slot change took effect within 20 seconds, and none of 2,956 login checks
-got in where it should not have. For a 15-PC pilot on campus we need
-\textbf{one public IP address, one domain name under \code{bracu.ac.bd}, two
-inbound ports (three with HTTP) and a lab email account} (Section~\ref{sec:uni}).
+\textbf{Summary:} Every thesis group already has booked slots on our lab PCs,
+but nothing enforces them. Groups work remotely through AnyDesk. Anyone with a
+PC's AnyDesk details can connect at any time. We have built and tested a system
+that enforces the slots. A self-hosted Headscale server admits only students
+who sign in with their BRACU Google account. Headscale is an open-source control
+server for the Tailscale and WireGuard VPN. The lab's weekly routine stays in a
+Google Sheet. Our slot system, labslots, reads it every 30 seconds.
+
+At each slot change, labslots rewrites the network policy and switches the PC to
+the incoming group's account. Only the group in its slot can then reach its PC.
+Every login to a lab PC uses Tailscale SSH, so there are no keys or passwords to
+hand out or take back. The system already runs on our own hardware with three
+lab PCs. In a test with 871 simulated devices on a 4-core server, every slot
+change took effect within 20 seconds. None of 2,956 login checks got in where it
+should not have. A 15-PC pilot on campus needs one public IP address, one domain
+name under \code{bracu.ac.bd}, two inbound ports and a lab email account
+(Section~\ref{sec:uni}). A third port for HTTP is optional.
 
 % ---------------------------------------------------------------------------
 \section{Background and Goals}
 
-Each thesis group is assigned two slots of just under 12 hours per week on a lab PC and works
-remotely through AnyDesk. The slots exist only on paper. AnyDesk connects
-through AnyDesk's own servers, so anyone who knows a PC's ID and password can
-connect whenever they like. That person can stop another group's training run,
-change its files or take over its desktop, and nobody can tell afterwards who
-did it. A group has one to five students, and students often use more than one
-device. Physical access stays under the lab's existing rules. The pilot aims
-to:
+Each thesis group is assigned two slots of just under 12 hours per week on a
+lab PC. Groups work remotely through AnyDesk, and the slots exist only on paper.
+AnyDesk connects through its own servers. Anyone who knows a PC's ID and
+password can therefore connect whenever they like. That person can stop another
+group's training run, change its files or take over its desktop. Nobody can tell
+afterwards who did it. A group has one to five students, and students often use
+more than one device. Physical access stays under the lab's existing rules. The
+pilot has seven aims.
 
 \begin{enumerate}[leftmargin=1.6em]
-  \item Enforce the slots: during a slot only that group can reach its PC
-        remotely; outside it, nobody except the lab admins.
+  \item Enforce the slots. During a slot only that group can reach its PC
+        remotely, and outside it nobody except the lab admins can.
   \item Run Headscale and the slot system on one machine in the lab, reachable
         through one public IP address and one domain name.
   \item Enroll 15 Linux lab PCs, each registered once as a lab-owned machine.
@@ -112,9 +113,9 @@ to:
         no passwords.
   \item Switch access automatically at every slot change, and record every
         change and every enforcement step.
-  \item Keep the schedule where the lab already keeps it, a Google Sheet, and
-        take group enrollments through our own page instead of a Google Form.
-  \item Measure reliability and load before any wider roll-out.
+  \item Keep the schedule in the Google Sheet the lab already uses, and take
+        group enrollments through our own page instead of a Google Form.
+  \item Measure reliability and load before any wider rollout.
 \end{enumerate}
 
 \newpage
@@ -126,18 +127,18 @@ Table~\ref{tab:why} compares the main ways to give students remote access to lab
 \begin{table}[H]
 \centering\footnotesize
 \renewcommand{\arraystretch}{1.05}
-\caption{Options for remote access.}
+\caption{\textbf{Options for remote access:} Each option with its control and data path and its fit for slot-based lab access.}
 \label{tab:why}
 \begin{tabularx}{\textwidth}{P{3.0cm}P{3.3cm}Y}
 \toprule
 Option & Control and data path & Fit for slot-based lab access \\
 \midrule
-Current setup: AnyDesk only & AnyDesk's servers & No slot enforcement: anyone with a PC's ID and password can connect at any time, and there is no record of who did \\
-SSH port-forwarding or a bastion host & Ports opened on campus; SSH exposed to the internet & Needs more than one IP and port from IT; open to brute-force attempts; slots enforced only on each PC \\
-Plain WireGuard (hub) & Our server; all traffic through the hub & No NAT traversal; keys and firewall rules managed by hand for every device \\
-Tailscale (hosted) & Tailscale Inc.\ (off campus); direct P2P & Can share a device into a group's own tailnet by email. The free plan covers 6 users; Standard costs \$8 per user per month. The control plane and user data stay off campus \\
-NetBird (self-hosted) & Ours; direct P2P & Capable, but several services to run (management, signal, relay, dashboard, identity provider) and its own clients \\
-\textbf{Headscale} (chosen) & \textbf{Ours; direct P2P} & One binary plus SQLite, official Tailscale clients, free (BSD-3). The policy is one document we regenerate and load through its API at every slot change \\
+Current setup, AnyDesk only & AnyDesk's servers & No slot enforcement. Anyone with a PC's ID and password can connect at any time, and nothing records who did \\
+SSH port forwarding or a bastion host & Ports opened on campus, with SSH exposed to the internet & Needs more than one IP and port from IT. Open to brute-force attempts. Slots are enforced only on each PC \\
+Plain WireGuard (hub) & Our server, with all traffic through the hub & No NAT traversal. Keys and firewall rules are managed by hand for every device \\
+Tailscale (hosted) & Tailscale Inc.\ off campus, direct P2P & Can share a device into a group's own tailnet by email. The free plan covers 6 users, and Standard costs \$8 per user per month. The control plane and user data stay off campus \\
+NetBird (self-hosted) & Ours, direct P2P & Capable. It needs its own clients and five services, namely management, signal, relay, dashboard and identity provider \\
+\textbf{Headscale} (chosen) & \textbf{Ours, direct P2P} & One binary plus SQLite, official Tailscale clients, free (BSD-3). The policy is one document we regenerate and load through its API at every slot change \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -145,14 +146,14 @@ NetBird (self-hosted) & Ours; direct P2P & Capable, but several services to run 
 % ---------------------------------------------------------------------------
 \section{System Architecture}
 
-The design separates a \textbf{control plane} from a \textbf{data plane}
-(Figure~\ref{fig:arch}). Headscale is an open-source reimplementation of
-Tailscale's coordination server that works with the official Tailscale
-clients. It registers devices, hands out tailnet addresses and keys, and
-pushes each device a peer list filtered by the access policy. It never
-carries user traffic. The data plane is WireGuard, running directly between
-the student's laptop and the lab PC. Next to Headscale runs labslots: a
-website (the \emph{hub}) and a \emph{slot agent} that enforces the schedule.
+The design separates a control plane from a data plane (Figure~\ref{fig:arch}).
+Headscale is an open-source reimplementation of Tailscale's coordination server
+that works with the official Tailscale clients. It registers devices and hands
+out tailnet addresses and keys. It also pushes each device a peer list filtered
+by the access policy. User traffic never passes through it. The data plane is
+WireGuard, running directly between the student's laptop and the lab PC. Next
+to Headscale runs labslots, which is a website (the \emph{hub}) and a \emph{slot
+agent} that enforces the schedule.
 
 \begin{figure}[t]
 \centering
@@ -198,7 +199,7 @@ website (the \emph{hub}) and a \emph{slot agent} that enforces the schedule.
   \draw[sched] (sc.west) -- node[lbl, above=2pt]{policy} (hs.east);
   \draw[plain] (sc.east) -- node[lbl, above=2pt]{schedule} (web.west);
   \draw[ctrl]  (web.east) -- (gg.south |- web.east) -- (gg.south);
-  \node[lbl, align=left, anchor=west] at ($(gg.south)+(0.12,-1.4)$) {sign-in;\\Sheet read\\every 30\,s};
+  \node[lbl, align=left, anchor=west] at ($(gg.south)+(0.12,-1.4)$) {sign-in,\\Sheet read\\every 30\,s};
 
   % ---- Host to lab PCs ----
   \draw[ctrl]  (hs.south) -- node[lbl, right=3pt, align=left, pos=0.45]{keys, peers, policy\\(every PC, campus LAN)} (p1.north);
@@ -216,89 +217,89 @@ website (the \emph{hub}) and a \emph{slot agent} that enforces the schedule.
     \draw[sched] (0,-0.8) -- (0.8,-0.8) node[right, black]{slot enforcement};
   \end{scope}
 \end{tikzpicture}
-\caption{Pilot architecture. Caddy is the only public entry point: it serves
-Headscale and the labslots website under one name. User traffic flows between
-laptop and lab PC, end-to-end encrypted with WireGuard.}
+\caption{\textbf{Pilot architecture:} Caddy is the only public entry point and
+serves Headscale and the labslots website under one name. User traffic flows
+between laptop and lab PC, encrypted end to end with WireGuard.}
 \label{fig:arch}
 \end{figure}
 
-\textbf{How a connection is made.}
+\textbf{How a Connection Is Made:} Each connection passes through four stages.
 \begin{enumerate}[leftmargin=1.6em]
   \item Every device keeps an HTTPS (TCP 443) session to Headscale and
         receives only the peers the policy allows.
-  \item A new connection starts out relayed through a DERP server. Meanwhile,
-        both ends learn their public addresses via STUN (UDP 3478) and attempt
+  \item A new connection starts out relayed through a DERP server. Meanwhile
+        both ends learn their public addresses through STUN (UDP 3478) and attempt
         NAT traversal.
-  \item If a direct UDP path works, traffic moves to it (lowest latency).
-        Under hard NAT, or where UDP is blocked, it stays on DERP over TCP 443,
-        which is slower but works. The client keeps re-checking for a direct
-        path.
-  \item Every path is WireGuard-encrypted end to end. The relay only ever
+  \item If a direct UDP path works, traffic moves to it for the lowest latency.
+        Otherwise traffic stays on DERP over TCP 443. That path is slower but
+        works, and the client keeps checking for a direct path under hard NAT or
+        blocked UDP.
+  \item Every path is encrypted end to end with WireGuard. The relay only ever
         sees ciphertext.
 \end{enumerate}
 
-Our host runs Headscale's \textbf{embedded DERP relay}, so relayed traffic
-stays on campus. Tailscale's public DERP servers can stay in the map as a
-backup, or be removed to keep everything in-house.
+Our host runs the embedded DERP relay of Headscale, so relayed traffic stays on
+campus. Tailscale's public DERP servers can stay in the map as a backup, or be
+removed to keep everything in house.
 
-\textbf{One entry point.} Caddy terminates TLS for \code{hs.cse.bracu.ac.bd} with
+\textbf{One Entry Point:} Caddy terminates TLS for \code{hs.cse.bracu.ac.bd} with
 an automatic Let's Encrypt certificate. It sends \code{/slots} to the labslots
-website and everything else to Headscale, which needs WebSocket support from
-the proxy; Caddy provides it, and our current deployment already runs behind a
+website and everything else to Headscale. Headscale needs WebSocket support from
+the proxy, which Caddy provides. Our current deployment already runs behind a
 reverse proxy. STUN (UDP 3478) goes straight to Headscale. Lab PCs reach the
-server on its campus LAN address through a hosts-file entry, so they do not
-depend on the campus firewall looping traffic back to the public IP (hairpin
+server on its campus LAN address through a hosts-file entry. They therefore do
+not depend on the campus firewall looping traffic back to the public IP (hairpin
 NAT).
 
-\subsection{Machines, users and slots}
+\subsection{Machines, Users and Slots}
 
-Each \textbf{lab PC} is registered once with a pre-authorised key that carries
-its tag (\code{tag:pc-NN}). That makes it a \emph{tagged node}, owned by the
-lab rather than by a person. Every student is a user in our tailnet,
-identified by their BRACU email. A \textbf{thesis group} is a list of emails in
-the access policy and one Linux account on its PC (\code{grp-<code>}).
-``Sharing'' a PC with a group is a policy grant that exists only during the
-group's slot. The PC cannot start connections back to the students.
+Each lab PC is registered once with a pre-authorized key that carries its tag
+(\code{tag:pc-NN}). That makes it a \emph{tagged node}, owned by the lab rather
+than by a person. Every student is a user in our tailnet, identified by their
+BRACU email. A thesis group is a list of emails in the access policy and one
+Linux account on its PC (\code{grp-<code>}). To share a PC with a group, the
+policy holds a grant that exists only during the group's slot. The PC cannot
+start connections back to the students.
 
-Each PC has 14 slots per week, \textbf{06:00--17:55} and
-\textbf{18:00--05:55} every day. Each slot ends five minutes before the next
-one starts; that switch-over belongs to no group. Each group normally gets two slots on
-different days (Table~\ref{tab:slots}). The routine is kept in a
-\textbf{Google Sheet}: one \emph{Routine} tab per term with a row per PC and a
-column per slot, where an admin types a group's code, and tabs for groups,
-PCs, terms and admins. The labslots website reads the Sheet every 30 seconds
-and checks every cell. A bad cell keeps its last good value and is listed in
-the Sheet's \emph{Problems} tab, and if Google cannot be reached the system
-keeps enforcing its last good copy.
+Each PC has 14 slots per week, 06:00--17:55 and 18:00--05:55 every day. A slot
+ends five minutes before the next one starts, and that switch-over belongs to no
+group. A group normally gets two slots on different days (Table~\ref{tab:slots}).
+The routine is kept in a Google Sheet with one \emph{Routine} tab per term. That
+tab has a row per PC and a column per slot, and an admin types a group's code
+into a cell. Other tabs hold the groups, PCs, terms and admins. The labslots
+website reads the Sheet every 30 seconds and checks every cell. A bad cell keeps
+its last good value and is listed in the \emph{Problems} tab of the Sheet. If
+Google cannot be reached, the system keeps enforcing its last good copy.
 
-The \textbf{slot agent} runs next to Headscale and acts every 15 seconds, so a
-missed boundary (a restart, an outage) is put right on the next run. At the end
-of a slot it closes the slot first and lets the next group in only when its
-slot starts, five minutes later:
+The slot agent runs next to Headscale and acts every 15 seconds. A missed
+boundary, such as a restart or an outage, is therefore put right on the next
+run. At the end of a slot the agent closes the slot first. It lets the next
+group in only when that slot starts, five minutes later. Each run has three
+steps.
 \begin{enumerate}[leftmargin=1.6em]
-  \item it writes the policy for the current slot (in the switch-over: no
-        group) and loads it through Headscale's API. All 15 PCs change in one update. Network access and
-        Tailscale SSH logins change here, and each PC ends the outgoing group's
-        open sessions itself;
-  \item it logs in to each PC as the scheduler node over Tailscale SSH and
-        runs \code{slot-switch}, which stops the outgoing group's processes
-        and, once the next slot starts, makes the incoming group's account the
-        only active one;
-  \item on any error, it loads an admins-only policy, so access fails closed.
-        Having no policy at all would allow everything.
+  \item The agent writes the policy for the current slot and loads it through
+        Headscale's API. In the switch-over the policy grants no group. All 15
+        PCs change in one update. Network access and Tailscale SSH logins change
+        here, and each PC ends the outgoing group's open sessions itself.
+  \item The agent logs in to each PC as the scheduler node over Tailscale SSH and
+        runs \code{slot-switch}. The helper stops the outgoing group's processes.
+        Once the next slot starts, it makes the incoming group's account the only
+        active one.
+  \item On any error, the agent loads an admins-only policy, so access fails
+        closed. Having no policy at all would allow everything.
 \end{enumerate}
 
 \begin{table}[H]
 \centering\small
-\caption{Example weekly schedule for one PC: six groups (A--F) and one
+\caption{\textbf{Example weekly schedule for one PC:} Six groups (A--F) share the week with one
 maintenance slot.}
 \label{tab:slots}
 \begin{tabular}{l*{7}{>{\centering\arraybackslash}p{1.1cm}}}
 \toprule
  & Mon & Tue & Wed & Thu & Fri & Sat & Sun \\
 \midrule
-06:00--17:55 & A & C & E & A & C & E & \cellcolor{gray!15}\textit{maint.} \\
-18:00--05:55 & B & D & F & B & D & F & \textit{spare} \\
+06:00--17:55 & A & C & E & A & C & E & \cellcolor{gray!15}\textit{Maint.} \\
+18:00--05:55 & B & D & F & B & D & F & \textit{Spare} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -319,59 +320,59 @@ maintenance slot.}
 \end{lstlisting}
 \end{minipage}
 
-\textbf{Lab PCs.} Each PC runs Ubuntu LTS with the Tailscale client and
-\textbf{Tailscale SSH} turned on. On the tailnet, port 22 is answered by the
-Tailscale client itself, which checks the caller's tailnet identity against the
-policy's \code{ssh} rules: a group member logs in as the group's account, the
-scheduler only as \code{labsched}, and admins as any non-root account. Nobody
-holds an SSH key, and there is nothing to revoke when a student leaves. One
-setup script per PC turns Tailscale SSH on and installs the \code{slot-switch}
-helper. Home directories persist between slots, but running jobs stop at slot
-end, so groups must checkpoint.
+\textbf{Lab PCs:} Each PC runs Ubuntu LTS with the Tailscale client and
+Tailscale SSH turned on. On the tailnet, port 22 is answered by the Tailscale
+client itself. It checks the caller's tailnet identity against the \code{ssh}
+rules of the policy. A group member logs in as the group's account and the
+scheduler only as \code{labsched}. Admins log in as any non-root account. Nobody
+holds an SSH key, and there is nothing to revoke when a student leaves. One setup
+script per PC turns Tailscale SSH on and installs the \code{slot-switch} helper.
+Home directories persist between slots, but running jobs stop at slot end.
+Groups must therefore checkpoint their work.
 
-\subsection{Student sign-in and enrollment}
+\subsection{Student Login and Enrollment}
 
-Headscale does not check passwords itself: it hands sign-in to
-\textbf{Google} over OIDC, and admits only verified accounts on BRACU's
-domains. The labslots website signs people in the same way. The lab stores no
-passwords, and a student who forgets theirs uses Google's own recovery.
+Headscale does not check passwords itself. It hands sign-in to Google over OIDC
+and admits only verified accounts on BRACU's domains. The labslots website signs
+people in the same way. The lab stores no passwords, and a student who forgets
+theirs uses Google's own recovery.
 
-\textbf{What the student does.}
+\textbf{What the Student Does:} The process has four steps.
 \begin{enumerate}[leftmargin=1.6em]
   \item One member of the group signs in to the enrollment page with their BRACU
-        Google account and sends the group's details: group name, thesis
-        title, the supervisor and any co-supervisors with their emails, and
-        one to five members with name, student ID and BRACU G Suite address.
-        Personal addresses are refused. This replaces the Google Form the lab
-        used before.
+        Google account. The member sends the group name, the thesis title, and
+        the supervisor and any co-supervisors with their emails. The form also
+        lists one to five members, each with name, student ID and BRACU G Suite
+        address. Personal addresses are refused. This page replaces the Google
+        Form the lab used before.
   \item An admin reviews the enrollment and assigns a PC and weekly slots in one
-        step; they are written into the Sheet. The group sees its PC, slots and
-        how to connect on its status page, and every member is emailed once
+        step. Both are written into the Sheet. The group sees its PC, its slots
+        and how to connect on its status page. Every member is emailed once
         outgoing email is set up.
   \item Each member runs \code{tailscale login -{}-login-server}
-        \code{https://hs.cse.bracu.ac.bd} once, or presses ``Log in'' in the
-        Tailscale app, and signs in with their BRACU account.
-  \item During a slot: \code{ssh grp-a@lab-pc-01}. Outside it, the PC cannot
-        be reached.
+        \code{https://hs.cse.bracu.ac.bd} once, or presses \emph{Log in} in the
+        Tailscale app. They then sign in with their BRACU account.
+  \item During a slot, a member connects with \code{ssh grp-a@lab-pc-01}.
+        Outside the slot, the PC cannot be reached.
 \end{enumerate}
-\emph{Signing in proves who you are; the schedule decides what you can reach.}
-Students can keep a personal Tailscale account alongside ours, because client
-1.34 and later supports several accounts.
+\emph{Sign-in proves who a student is, and the schedule decides what that student
+can reach.} Students can keep a personal Tailscale account alongside ours,
+because client 1.34 and later supports several accounts.
 
-\textbf{The admin desk.} Admins use the same website: the PCs in use now and
-what changes next, a calendar of the routine, the enrollment queue, the state
-of each PC, the enforcement settings with a preview of the policy, and a log of
-every change and enforcement step.
+\textbf{The Admin Desk:} Admins use the same website. It shows the PCs in use now
+and what changes next, a calendar of the routine and the enrollment queue. It
+also shows the state of each PC and the enforcement settings with a policy
+preview. A log records every change and every enforcement step.
 
 \subsection{Devices}
 \label{sec:nodes}
 
-A \emph{node} is a device, not a user: a student with a laptop and a phone is
+A \emph{node} is a device, not a user. A student with a laptop and a phone is
 two nodes (Table~\ref{tab:nodes}).
 
 \begin{table}[H]
 \centering\small
-\caption{Nodes on the server (15 lab PCs and 1 scheduler included).}
+\caption{\textbf{Nodes on the server:} The counts include the 15 lab PCs and the scheduler node.}
 \label{tab:nodes}
 \begin{tabularx}{\textwidth}{YP{3.4cm}P{3.4cm}}
 \toprule
@@ -383,51 +384,50 @@ Devices kept all week (6 groups per PC, 90 groups) & 466 & 916 \\
 \end{tabularx}
 \end{table}
 
-Headscale's FAQ says it ``can likely handle 100s of devices (maybe more)''
-when the network changes rarely, because every change rebuilds the network map
-for every node. Our earlier plan therefore removed every device at the end of
-its slot, which would make students sign in again before each slot. Our stress
-test (Section~\ref{sec:tests}) shows this is not needed at pilot scale: a
-4-core server held 871 devices that never left, and stayed almost idle between
-slot changes. Devices therefore stay registered; access follows the policy,
-not the device list. Clean-up removes only what is no longer needed:
+Headscale's FAQ says it can likely handle hundreds of devices when the network
+changes rarely. Every change rebuilds the network map for every node. For that
+reason our earlier plan removed every device at the end of its slot, so students
+would sign in again before each slot. Our stress test (Section~\ref{sec:tests})
+shows this is not needed at pilot scale. A 4-core server held 871 devices that
+never left and stayed almost idle between slot changes. Devices therefore
+stay registered, and access follows the policy rather than the device list.
+Clean-up removes only what is no longer needed.
 \begin{itemize}[leftmargin=1.6em]
-  \item a day after a student leaves every group (their group or term is
-        removed from the Sheet), their devices are removed;
-  \item an optional switch also removes devices outside their slot and beyond
-        two per student. It starts in dry-run mode, listing what it would
+  \item A day after a student leaves every group, their devices are removed.
+        This happens when their group or term is removed from the Sheet.
+  \item An optional switch also removes devices outside their slot and beyond
+        two per student. It starts in dry-run mode and lists what it would
         remove.
 \end{itemize}
 
-\subsection{Remote desktop in the slot (planned)}
+\subsection{Remote Desktop in the Slot (Planned)}
 
-AnyDesk is how groups work today, and it is where the slots are bypassed.
-AnyDesk connects through \emph{AnyDesk's own servers}, not our tailnet, so our
-policy cannot control it, and its free licence does not cover lab use. We
-therefore plan to turn off AnyDesk's unattended access on enrolled PCs and
-offer a remote desktop that runs over the tailnet instead (RustDesk in
-direct-IP mode, or xrdp). Its port is added to the ports a group gets in its
-slot, and the same policy then controls it, just like SSH. This part is not
-built or tested yet.
+Groups work through AnyDesk today, and that is where the slots are bypassed.
+AnyDesk connects through its own servers rather than our tailnet, so our policy
+cannot control it. Its free license also does not cover lab use. We therefore
+plan to turn off unattended AnyDesk access on enrolled PCs. A remote desktop
+that runs over the tailnet replaces it, either RustDesk in direct-IP mode or
+xrdp. Its port is added to the ports a group gets in its slot, so the same
+policy controls it as it controls SSH. This part is not built or tested yet.
 
 % ---------------------------------------------------------------------------
 \section{What We Have Built and Tested}
 \label{sec:tests}
 
-\textbf{Running today.} Headscale 0.29.3 and labslots run on our own server
-behind a reverse proxy, at a domain of our own, with three lab PCs enrolled
-(pc-41, pc-43 and pc25) and Google sign-in limited to BRACU accounts. The
-website, the Sheet, enrollment and slot enforcement work end to end, and an
-automated test suite (73 tests) covers the policy, the enforcement steps, the
-Sheet and the website.
+\textbf{Running Today:} Headscale 0.29.3 and labslots run on our own server
+behind a reverse proxy, at a domain of our own. Three lab PCs are enrolled
+(pc-41, pc-43 and pc25), and Google sign-in is limited to BRACU accounts. The
+website, the Sheet, enrollment and slot enforcement work end to end. An automated
+suite of 79 tests covers the policy, the enforcement steps, the Sheet and the
+website.
 
-\textbf{Home-lab rehearsal (13 October).} We rebuilt the pilot on our home
-network, with a simulated campus, firewall and off-campus clients, measured
-it, and removed it again (Table~\ref{tab:rehearsal}).
+\textbf{Home Lab Rehearsal (13 October):} We rebuilt the pilot on our home
+network with a simulated campus, firewall and off-campus clients. We measured it
+and then removed it again (Table~\ref{tab:rehearsal}).
 
 \begin{table}[htbp]
 \centering\small
-\caption{Rehearsal results against the pilot's targets.}
+\caption{\textbf{Rehearsal results:} Each measure against the target set for the pilot.}
 \label{tab:rehearsal}
 \begin{tabularx}{\textwidth}{YP{2.4cm}P{4.4cm}}
 \toprule
@@ -436,28 +436,29 @@ Measure & Target & Result \\
 Enrollment time per lab PC & $\le$ 10 min & 11 s (package already installed) \\
 Time to revoke access & $\le$ 1 min & 3--5 s \\
 Restore from backup on a new server & $\le$ 2 h & 63 s, all nodes back \\
-Access-policy tests & all pass & 13 of 13 \\
+Access-policy tests & All pass & 13 of 13 \\
 Direct (not relayed) connections & $\ge$ 80\% & 44--58\% (see Risks) \\
-30-minute server outage & sessions survive & direct: 0\% loss; relayed: 92\% loss \\
-Off campus, only TCP 443 allowed & works & relayed at 27--37 ms \\
+30-minute server outage & Sessions survive & Direct 0\% loss, relayed 92\% loss \\
+Off campus, only TCP 443 allowed & Works & Relayed at 27--37 ms \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\textbf{Stress tests (22 October).} We ran the complete server side
-(Headscale, website, slot agent, scheduler node) in a container and drove it
-with simulated lab PCs and students; run 2 spread them across three machines.
-Every simulated PC ran the real setup script, and every student device was a
-real Tailscale client. Throughout, sampled students were checked against the
-schedule every 20--30 seconds: their group's own PC must be reachable during
-the slot, other PCs must not. Run 1 checked network access to port 22; run 2
-made real Tailscale SSH logins, and also tried another group's account, which
-must fail. Table~\ref{tab:stress} summarises both runs.
+\textbf{Stress Tests (22 October):} We ran the complete server side in a
+container and drove it with simulated lab PCs and students. The server side is
+Headscale, the website, the slot agent and the scheduler node. Run 2 spread the
+simulated clients across three machines. Every simulated PC ran the real setup
+script, and every student device was a real Tailscale client. Sampled students
+were checked against the schedule every 20--30 seconds throughout. Their group's
+own PC had to be reachable during the slot, and other PCs had to stay
+unreachable. Run 1 checked network access to port 22. Run 2 made real Tailscale
+SSH logins and also tried another group's account, which had to fail.
+Table~\ref{tab:stress} summarizes both runs.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Stress tests. Times are from the schedule change; they include up to
-15\,s until the agent's next run.}
+\caption{\textbf{Stress tests:} Times are measured from the schedule change and
+include up to 15\,s until the next agent run.}
 \label{tab:stress}
 \begin{tabularx}{\textwidth}{YP{3.6cm}P{3.6cm}}
 \toprule
@@ -477,11 +478,11 @@ Headscale memory, peak & 161 MB & 450 MB \\
 \end{tabularx}
 \end{table}
 
-\textbf{What this means for the pilot.} A 15-PC pilot needs about 100--900
+\textbf{What This Means for the Pilot:} A 15-PC pilot needs about 100--900
 devices, depending on how many students keep devices registered. A 4-core
-machine with 2\,GB of memory or more handles that; only a mass sign-in, such
-as the first day of term, briefly uses all four cores. Slot changes take
-effect within about 20 seconds, and the policy held in every probe.
+machine with 2\,GB of memory or more handles that. Only a mass sign-in uses all
+four cores, and only briefly, as on the first day of term. Slot changes take effect
+within about 20 seconds, and the policy held in every probe.
 
 % ---------------------------------------------------------------------------
 \section{Technical Specifications}
@@ -490,14 +491,14 @@ The whole system runs on one small, low-power machine in the lab (Table~\ref{tab
 
 \begin{table}[H]
 \centering\small
-\caption{Headscale host: hardware and power.}
+\caption{\textbf{Headscale host:} Hardware, software and power for the one machine in the lab.}
 \label{tab:host}
 \begin{tabularx}{\textwidth}{P{3.1cm}Y}
 \toprule
-Machine & 8-core mini PC or small desktop (AMD Ryzen 7 or Intel Core i7 class), 16\,GB RAM, 512\,GB NVMe SSD, 1\,GbE wired. The stress test ran the server side on 4 cores and under 1\,GB, but a mass sign-in used all four cores; eight leave room for that, for growth beyond 15 PCs, and for a second relay or monitoring on the same machine \\
-Software & Ubuntu Server 24.04 LTS; Headscale 0.29.3 (pinned) with SQLite and its embedded DERP relay; Caddy; Docker running the labslots website, the slot agent, the scheduler node (Tailscale 1.102.3) and a nightly backup job \\
-Power draw & Roughly 8--15\,W idle and 60--90\,W at full load, depending on the model; about 11\,kWh per month at a 15\,W average. We will measure our unit \\
-Backup power and data & 650\,VA UPS. Nightly copies of the Headscale, website and agent databases (kept 14 days), with Headscale's keys and configuration, go to a second disk \\
+Machine & 8-core mini PC or small desktop (AMD Ryzen 7 or Intel Core i7 class), 16\,GB RAM, 512\,GB NVMe SSD, 1\,GbE wired. The stress test ran the server side on 4 cores and under 1\,GB, but a mass sign-in used all four cores. Eight cores leave room for that, for growth beyond 15 PCs and for a second relay or monitoring on the same machine \\
+Software & Ubuntu Server 24.04 LTS. Headscale 0.29.3 (pinned) with SQLite and its embedded DERP relay. Caddy. Docker running the labslots website, the slot agent, the scheduler node (Tailscale 1.102.3) and a nightly backup job \\
+Power draw & Roughly 8--15\,W idle and 60--90\,W at full load, depending on the model. About 11\,kWh per month at a 15\,W average. We will measure our unit \\
+Backup power and data & 650\,VA UPS. Nightly copies of the Headscale, website and agent databases go to a second disk with Headscale's keys and configuration. Copies are kept 14 days \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -511,12 +512,12 @@ SSH is answered only on the tailnet, by Tailscale SSH.
 \label{sec:uni}
 
 We ask for the five things in Table~\ref{tab:asks}. The project team provides
-everything else: the machine, software, certificates, setting up the lab PCs,
-and running the system.
+everything else. That covers the machine, its software and certificates, and the
+work of setting up the lab PCs and running the system.
 
 \begin{table}[H]
 \centering\small
-\caption{What we need from the University.}
+\caption{\textbf{What we need from the University:} Each item, exactly what it is and what it is for.}
 \label{tab:asks}
 \begin{tabularx}{\textwidth}{P{0.35cm}P{3.0cm}YP{4.0cm}}
 \toprule
@@ -524,16 +525,16 @@ and running the system.
 \midrule
 1 & Public IP address & One static public IPv4 address, routed or forwarded to the Headscale host in the lab & Students reach the server from home and campus \\
 2 & Domain name & One DNS record under \code{bracu.ac.bd} for that address, for example \code{hs.cse.bracu.ac.bd} (the exact name is IT's choice) & Headscale and the labslots website, with a Let's Encrypt certificate \\
-3 & Firewall ports & Inbound to that address only: TCP 443 and UDP 3478, and TCP 80 if allowed (Table~\ref{tab:exposed}) & Control traffic, the relay, STUN and certificate checks \\
+3 & Firewall ports & TCP 443 and UDP 3478, plus TCP 80 if allowed, inbound to that address only (Table~\ref{tab:exposed}) & Control traffic, the relay, STUN and certificate checks \\
 4 & Lab email account & One account on \code{bracu.ac.bd} for the lab, for example \code{cse-labslots@bracu.ac.bd}, with an app password or permission to send through BRACU's Google Workspace SMTP relay & Emails each group the result of its enrollment \\
-5 & Google sign-in & If BRACU's Google Workspace restricts third-party apps: our Google OAuth client allowed for BRACU accounts & Students and admins sign in with their BRACU accounts \\
+5 & Google sign-in & Our Google OAuth client allowed for BRACU accounts, if BRACU's Google Workspace restricts third-party apps & Students and admins sign in with their BRACU accounts \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \begin{table}[H]
 \centering\small
-\caption{Ports exposed to the internet (inbound to the public IP only).}
+\caption{\textbf{Ports exposed to the internet:} All are inbound to the public IP only.}
 \label{tab:exposed}
 \begin{tabularx}{\textwidth}{P{1.8cm}P{2.3cm}YP{2.5cm}}
 \toprule
@@ -541,41 +542,45 @@ Port & Received by & Purpose & Status \\
 \midrule
 TCP 443 & Caddy & Tailscale control traffic and the DERP relay (Headscale), and the labslots website & Required \\
 UDP 3478 & Headscale & STUN, so devices can find their public address and connect directly & Required \\
-TCP 80 & Caddy & Let's Encrypt certificate checks; redirects browsers to HTTPS & Recommended\textsuperscript{*} \\
+TCP 80 & Caddy & Let's Encrypt certificate checks, and redirects browsers to HTTPS & Recommended\textsuperscript{*} \\
 \bottomrule
 \end{tabularx}
 
 \raggedright\footnotesize\textsuperscript{*}Caddy can also validate certificates over TCP 443, so port 80 can stay closed if the University prefers.
 \end{table}
 
-\textbf{Nothing else is exposed.} The lab PCs, port 22 and the services
-behind Caddy are not reachable from the internet. Student traffic reaches a PC
-only through WireGuard, and only during the group's slot.
+\textbf{Nothing Else Is Exposed:} The lab PCs, port 22 and the services behind
+Caddy are not reachable from the internet. Student traffic reaches a PC only
+through WireGuard, and only during the group's slot.
 
-\textbf{Outbound traffic from the lab network}, which campus networks normally
-already allow: UDP 41641, UDP 3478 and TCP 443 to any address, from the lab PCs
-and the Headscale host. If outbound UDP is blocked, connections still work
-through our relay on TCP 443, only slower.
+\textbf{Outbound Traffic from the Lab Network:} The lab PCs and the Headscale host
+need UDP 41641, UDP 3478 and TCP 443 outbound to any address. Campus networks
+normally allow this already. If outbound UDP is blocked, connections still work
+through our relay on TCP 443, only more slowly.
 
 % ---------------------------------------------------------------------------
 \section{Risks}
 
+Table~\ref{tab:risks} pairs each risk with its mitigation.
+
 \begin{table}[H]
 \centering\footnotesize
+\caption{\textbf{Risks and mitigations:} Each row pairs a risk with what limits it.}
+\label{tab:risks}
 \begin{tabularx}{\textwidth}{P{5.0cm}Y}
 \toprule
 Risk & Mitigation \\
 \midrule
-The slot agent cannot build or load the policy & Falls back to an admins-only policy (no student access); the error shows on the admin desk and in the log \\
-The website or the Google Sheet is unreachable & The slot agent keeps enforcing its last good copy of the schedule; edits wait until the Sheet can be read again \\
-A mistaken edit in the Sheet & A bad cell keeps its last good value and is listed in the Problems tab; removing more than half of a tab at once is held back; devices are removed only a day after a student leaves every group \\
-Headscale restarts or goes down & Direct connections survive (0\% loss in a 30-minute outage) but relayed ones drop. Restarts and upgrades are done between slots; a relay on a second machine removes this if needed \\
-Fewer direct connections than hoped (44--58\% in the rehearsal) & Relayed connections still work. Lab PCs behind one NAT all use UDP 41641; giving each PC its own port, or an endpoint-independent NAT, improves this \\
-Many devices sign in at once (first day of term) & Measured: 800 devices in about 3 minutes on 4 cores, all online; slot changes are not affected afterwards \\
-BRACU's Google Workspace blocks our sign-in & We ask IT to allow our OAuth client; the admins keep access through their own accounts meanwhile \\
-A student shares their account & The account still reaches only that group's PC during its slot; an admin can remove the device at any time \\
-Remote desktop outside the tailnet (AnyDesk) & Unattended AnyDesk access is turned off on enrolled PCs; remote desktop runs over the tailnet under the same policy \\
-Headscale host fails & UPS and nightly backups; a restore on a new machine took 63 seconds in the rehearsal \\
+The slot agent cannot build or load the policy & Falls back to an admins-only policy with no student access. The error shows on the admin desk and in the log \\
+The website or the Google Sheet is unreachable & The slot agent keeps enforcing its last good copy of the schedule. Edits wait until the Sheet can be read again \\
+A mistaken edit in the Sheet & A bad cell keeps its last good value and is listed in the Problems tab. Removing more than half of a tab at once is held back. Devices are removed only a day after a student leaves every group \\
+Headscale restarts or goes down & Direct connections survive (0\% loss in a 30-minute outage) but relayed ones drop. Restarts and upgrades are done between slots. A relay on a second machine removes this risk if needed \\
+Fewer direct connections than hoped (44--58\% in the rehearsal) & Relayed connections still work. Lab PCs behind one NAT all use UDP 41641. Giving each PC its own port, or an endpoint-independent NAT, improves this \\
+Many devices sign in at once (first day of term) & Measured at 800 devices in about 3 minutes on 4 cores, all online. Slot changes are not affected afterwards \\
+BRACU's Google Workspace blocks our sign-in & We ask IT to allow our OAuth client. Meanwhile the admins keep access through their own accounts \\
+A student shares their account & The account still reaches only that group's PC during its slot. An admin can remove the device at any time \\
+Remote desktop outside the tailnet (AnyDesk) & Unattended AnyDesk access is turned off on enrolled PCs. Remote desktop runs over the tailnet under the same policy \\
+Headscale host fails & UPS and nightly backups. A restore on a new machine took 63 seconds in the rehearsal \\
 \bottomrule
 \end{tabularx}
 \end{table}
