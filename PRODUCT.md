@@ -14,7 +14,7 @@ web
 
 ## Product Purpose
 
-The admin desk of the BRACU CSE Research Lab's PC slot system. Every thesis group has booked 12-hour slots on lab PCs, but before this system nothing enforced them (anyone with a PC's AnyDesk details could connect at any time). The schedule itself lives in a Google Sheet (one Routine tab per term, plus Groups, PCs, Terms and Admins tabs) that admins edit directly; the desk shows what is enforced now, takes enrollments and assigns them, and holds the enforcement settings. Success: at any moment an admin or supervisor can tell at a glance who is on which PC, what changes next, and whether enforcement is healthy, and can build or adjust a term's schedule quickly.
+The admin desk of the BRACU CSE Research Lab's PC slot system. Every thesis group has booked slots of just under 12 hours on lab PCs, but before this system nothing enforced them (anyone with a PC's AnyDesk details could connect at any time). The schedule itself lives in a Google Sheet (one Routine tab per term, plus Groups, PCs, Terms and Admins tabs) that admins edit directly; the desk shows what is enforced now, takes enrollments and assigns them, and holds the enforcement settings. Success: at any moment an admin or supervisor can tell at a glance who is on which PC, what changes next, and whether enforcement is healthy, and can build or adjust a term's schedule quickly.
 
 ## Positioning
 
@@ -23,7 +23,7 @@ The schedule is the access control. A group's code in a Routine cell of the Shee
 ## Operating Context
 
 - Use is split evenly between two rhythms: heavy Sheet editing when a term is set up or reshuffled, and daily status checks and approvals through the semester.
-- Slot model (`proposal/proposal.tex`): 14 slots per PC per week, 08:00-20:00 and 20:00-08:00 (Asia/Dhaka). A night slot belongs to the date it starts. Each group normally gets two slots on different days. Bookings repeat weekly within a term (a date range).
+- Slot model (`proposal/proposal.tex`): 14 slots per PC per week, 06:00-17:55 and 18:00-05:55 (Asia/Dhaka); each ends five minutes before the next starts, a switch-over in which no group has access. A night slot belongs to the date it starts. Each group normally gets two slots on different days. Bookings repeat weekly within a term (a date range).
 - Thesis groups do not request PCs or slots. They **enroll**: one member signs in with their BRACU Google account at `/slots/enroll` and sends the group's details (group name, thesis title, the supervisor and any co-supervisors with their emails, one to five members with name, student ID and BRACU G Suite email (@g.bracu.ac.bd, never a personal address), hardware needs). This replaces the Google Form the lab used before.
 - An admin reviews each enrollment and **assigns** the group a PC and its weekly slots; timing is entirely the admin's decision. Approving writes the group and its slots into the Sheet in one step. Rejections carry a reason.
 - Groups learn the outcome on their status page at `/slots/enroll` (PC, slots, how to connect) and by email to every member once outgoing email is configured.

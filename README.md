@@ -3,11 +3,13 @@
 Remote access to the BRACU CSE Research Lab's PCs over a self-hosted Headscale tailnet, limited to each
 thesis group's booked slots.
 
-Every PC has 14 twelve-hour slots a week (08:00–20:00 and 20:00–08:00, Asia/Dhaka). The weekly routine lives
-in a Google Sheet. **labslots** reads it every 30 seconds. One slot agent per Headscale server then:
+Every PC has 14 slots a week (06:00–17:55 and 18:00–05:55, Asia/Dhaka). Each slot ends five minutes before
+the next starts; in that switch-over no group has access. The weekly routine lives in a Google Sheet.
+**labslots** reads it every 30 seconds. One slot agent per Headscale server then:
 
-- writes the policy for the current slot;
-- makes the incoming group's account the only active one on each PC, over Tailscale SSH;
+- writes the policy for the current slot, closing it at its end before the next group is let in;
+- makes the incoming group's account the only active one on each PC, over Tailscale SSH (in the switch-over,
+  no account: the outgoing group's sessions and processes end);
 - optionally removes devices that are out of their slot.
 
 A student reaches their group's PC only while the group's slot is running. They log in with Tailscale SSH as

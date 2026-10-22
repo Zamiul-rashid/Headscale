@@ -3,11 +3,11 @@
 {% block body %}
 {% set q = ('&group=' ~ group if group else '') ~ ('&pc=' ~ pc if pc else '') %}
 {% set step = {'day': 'day', 'week': 'week', 'month': 'month', 'quarter': '3 months'}[view] %}
-{% macro hours(half) %}{{ '08:00–20:00' if half == 'day' else '20:00–08:00' }}{% endmacro %}
+{% macro hours(half) %}{{ SPAN[half] }}{% endmacro %}
 <div class="pagehead">
   <div>
     <h1>{{ title }}</h1>
-    <p>Which group has which PC on each date, from every semester that covers it. The schedule itself is edited in the Google Sheet. Night slots run from 20:00 on the date shown to 08:00 the next morning.</p>
+    <p>Which group has which PC on each date, from every semester that covers it. The schedule itself is edited in the Google Sheet. Night slots run from {{ SPAN.night[:5] }} on the date shown to {{ SPAN.night[-5:] }} the next morning; each slot ends five minutes before the next starts.</p>
   </div>
   {% if sheet %}<a class="btn primary" href="{{ sheet.url }}" target="_blank" rel="noopener">Edit in the Sheet</a>{% endif %}
 </div>
@@ -50,7 +50,7 @@
 </div>
 <div class="sheet-wrap">
 <table class="sheet list daytable" aria-label="{{ title }}">
-  <thead><tr><th scope="col">PC</th><th scope="col">Day · 08:00–20:00</th><th scope="col">Night · 20:00–08:00</th></tr></thead>
+  <thead><tr><th scope="col">PC</th><th scope="col">Day · {{ SPAN.day }}</th><th scope="col">Night · {{ SPAN.night }}</th></tr></thead>
   <tbody>
   {% for p_ in pcs %}{% set bd = (cal.get((p_.id, d, 'day')) or [None])[0] %}{% set bn = (cal.get((p_.id, d, 'night')) or [None])[0] %}
   <tr data-search="{{ p_.name|lower }} {{ (bd.short or bd.slug or '')|lower if bd }} {{ (bd.group_name or '')|lower if bd }} {{ (bn.short or bn.slug or '')|lower if bn }} {{ (bn.group_name or '')|lower if bn }}">
@@ -76,7 +76,7 @@
   <thead>
     <tr class="days"><th class="pc" rowspan="2">PC</th>
       {% for d in days %}<th colspan="2" class="daystart {{ 'today' if d == today }}" scope="colgroup"><a class="daylink" href="?view=day&at={{ d.isoformat() }}{{ q }}">{{ WEEKDAYS[loop.index0] }}<small>{{ d.strftime('%d %b') }}</small></a></th>{% endfor %}</tr>
-    <tr class="halves">{% for d in days %}{% set t_ = 'today' if d == today else '' %}<th class="daystart {{ t_ }}" scope="col">08–20</th><th class="{{ t_ }}" scope="col">20–08</th>{% endfor %}</tr>
+    <tr class="halves">{% for d in days %}{% set t_ = 'today' if d == today else '' %}<th class="daystart {{ t_ }}" scope="col">{{ SPAN.day }}</th><th class="{{ t_ }}" scope="col">{{ SPAN.night }}</th>{% endfor %}</tr>
   </thead>
   <tbody>
   {% for p_ in pcs %}
@@ -102,7 +102,7 @@
     <h3>{{ p_.name }}<span>{{ p_.tag }}</span></h3>
     <p class="swipe-hint">{{ loop.index }} of {{ pcs|length }}{% if pcs|length > 1 %} · swipe for the next PC{% endif %}</p>
     <table class="mini calendar">
-      <thead><tr><th scope="col"></th><th scope="col">08–20</th><th scope="col">20–08</th></tr></thead>
+      <thead><tr><th scope="col"></th><th scope="col">{{ SPAN.day }}</th><th scope="col">{{ SPAN.night }}</th></tr></thead>
       <tbody>
       {% for d in days %}
         <tr>
@@ -157,7 +157,7 @@
 </div>
 <div class="key">
   {% if detail %}
-  <span><span class="chip-sample"></span> code · PC · day (08–20) or night (20–08)</span>
+  <span><span class="chip-sample"></span> code · PC · day ({{ SPAN.day }}) or night ({{ SPAN.night }})</span>
   <span><span class="sample-live"></span> running now</span>
   {% else %}
   <span><span class="sample-occ"><i></i></span> share of the {{ n_pcs }} PCs booked; pick a group or PC above to list its slots</span>

@@ -4,7 +4,7 @@
 <div class="pagehead">
   <div>
     <h1>Who has which PC</h1>
-    <p>This slot runs until {{ next_change.strftime('%A %H:%M') }}. Each Headscale server's slot agent enforces it and reports here.</p>
+    <p>{% if switching %}Switch-over: the last slot has closed and no group has access until {{ next_change.strftime('%A %H:%M') }}.{% else %}This slot runs until {{ next_change.strftime('%A %H:%M') }}.{% endif %} Each Headscale server's slot agent enforces it and reports here.</p>
   </div>
   <form method="post" action="{{ base }}/enforce"><button class="btn">Re-apply now</button></form>
 </div>

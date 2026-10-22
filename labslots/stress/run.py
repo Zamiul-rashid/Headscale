@@ -79,9 +79,9 @@ def ct_ip() -> str:
 def slots_now() -> list[tuple[int, str]]:
     """The slot running now and the next one (both get the same assignment, in case a boundary passes)."""
     d = now()
-    if 8 <= d.hour < 20:
+    if 6 <= d.hour < 18:
         cur = (d.weekday(), "day")
-    elif d.hour >= 20:
+    elif d.hour >= 18:
         cur = (d.weekday(), "night")
     else:
         cur = ((d - timedelta(days=1)).weekday(), "night")

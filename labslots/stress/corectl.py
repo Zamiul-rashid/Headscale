@@ -49,9 +49,9 @@ def set_setting(c, key: str, value: str) -> None:
 def slots_now() -> list[tuple[int, str]]:
     """The slot running now and the next one (both get the assignment, in case a boundary passes mid-run)."""
     d = datetime.now(DHAKA).replace(tzinfo=None)
-    if 8 <= d.hour < 20:
+    if 6 <= d.hour < 18:
         cur = (d.weekday(), "day")
-    elif d.hour >= 20:
+    elif d.hour >= 18:
         cur = (d.weekday(), "night")
     else:
         cur = ((d - timedelta(days=1)).weekday(), "night")

@@ -243,7 +243,7 @@ def test_admin_approves_enrollment_into_the_sheet(tmp_path):
     row = next(r for r in sheet.tabs[routine_tab("T")] if r and r[0] == "pc-43")
     assert row[5] == "BA-ASR" and row[10] == "BA-ASR"
     status = s.get("/slots/enroll").text
-    assert "Enrolled" in status and "pc-43" in status and "grp-bangla-asr" in status and "Wed 08:00-20:00" in status
+    assert "Enrolled" in status and "pc-43" in status and "grp-bangla-asr" in status and "Wed 06:00-17:55" in status
 
 
 def test_no_student_keys_and_reject_flow(tmp_path):

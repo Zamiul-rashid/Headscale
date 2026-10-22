@@ -246,7 +246,7 @@ Group colours are data, not tokens. Each group stores its own colour (the Colour
 
 The page has a sticky 52px blue shell. Under it, a panel-coloured status line (live slot, next change, three enforcement switches, alerts, pending count), then `main`. Shell, status line and main share a centred content width (max 1680px) with 20px side gutters. Main padding is 24px top and 40px bottom. A page head puts the headline and description on the left, page-level controls on the right, and wraps when space runs out.
 
-The routine lives in the Calendar's week view. It is a fixed-layout table with a 128px sticky PC column and seven day columns, each split into 08–20 and 20–08 halves. Cells are 48px tall. Header rows stick to the top. Content sections tile with `auto-fit` at a 420px minimum and 32px gaps.
+The routine lives in the Calendar's week view. It is a fixed-layout table with a 128px sticky PC column and seven day columns, each split into 06:00–17:55 and 18:00–05:55 halves. Cells are 48px tall. Header rows stick to the top. Content sections tile with `auto-fit` at a 420px minimum and 32px gaps.
 
 Spacing uses the 4px scale s1–s10 for gaps, margins and layout padding. Control heights are fixed (36px default, 28px small, 30px in-cell inputs). Their internal padding uses odd pixel values so a 1px border still lands on those heights.
 

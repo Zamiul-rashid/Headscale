@@ -32,6 +32,30 @@ def test_night_after_midnight_still_monday_night(db):
     assert ["group:thesis-b"] in srcs and ["group:thesis-a"] not in srcs
 
 
+def test_switch_window_closes_the_slot_before_the_next_group(db):
+    """17:55-18:00: the day group's grant and account are gone, the night group is not in yet."""
+    from datetime import datetime
+    seed(db)
+    db.set_setting("ssh_enforce", "1")
+    hs, ssh = FakeHeadscale(nodes()), FakeSSH()
+    e = make(db, datetime(2026, 10, 19, 17, 50), hs, ssh)
+    e.reconcile()
+    assert ssh.calls[-1] == ("100.64.0.2", "grp-thesis-a")
+    assert e.next_change() == datetime(2026, 10, 19, 17, 55)
+    e.clock.dt = datetime(2026, 10, 19, 17, 56)
+    rep = e.reconcile()
+    srcs = [g["src"] for g in last_policy(hs)["grants"]]
+    assert ["group:thesis-a"] not in srcs and ["group:thesis-b"] not in srcs and ["group:admins"] in srcs
+    assert last_policy(hs)["ssh"] and not any(r["src"][0].startswith("group:thesis") for r in last_policy(hs)["ssh"])
+    assert ssh.calls[-1] == ("100.64.0.2", None) and rep.switching and not rep.admins_only
+    assert "switch-over" in hs.policies[-1].splitlines()[0]
+    assert e.next_change() == datetime(2026, 10, 19, 18, 0)
+    e.clock.dt = datetime(2026, 10, 19, 18, 0)
+    e.reconcile()
+    assert ["group:thesis-b"] in [g["src"] for g in last_policy(hs)["grants"]]
+    assert ssh.calls[-1] == ("100.64.0.2", "grp-thesis-b")
+
+
 def test_pending_booking_has_no_effect(db):
     seed(db)
     hs = FakeHeadscale(nodes())

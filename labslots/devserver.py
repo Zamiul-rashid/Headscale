@@ -54,7 +54,7 @@ db.x("INSERT INTO pc_state(pc_id, active_account, updated_at, last_error) VALUES
 db.x("INSERT INTO pc_state(pc_id, active_account, updated_at, last_error) VALUES (?, 'grp-thesis-d', 'x', "
      "'pc-25: switch to grp-thesis-a failed: ssh: connect to host 100.64.0.5 port 22: Connection timed out')", (pcs[0],))
 for i, (a, d) in enumerate((("booking-approved", "#12 Thesis C (example) on pc-41, Tue night"),
-                            ("policy-applied", "Sat 17 Oct 08:00-20:00: Thesis E (example)->pc-25, Thesis F (example)->pc-41"),
+                            ("policy-applied", "Sat 17 Oct 06:00-17:55: Thesis E (example)->pc-25, Thesis F (example)->pc-41"),
                             ("pc-switch-error", "pc-25: switch to grp-thesis-a failed: connection timed out"),
                             ("login", ""))):
     db.audit("admin@g.bracu.ac.bd" if a != "policy-applied" and a != "pc-switch-error" else "scheduler", a, d)

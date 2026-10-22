@@ -25,7 +25,7 @@ from .hub import SERVER_RE, add_server, apply_slice, node_index, pc_states, repo
     server_slice, store_report
 from .mailer import Mailer
 from .policy import SLUG_RE, TAG_RE, PolicyError, build_policy
-from .slots import HALVES, WEEKDAYS, Slot, monday_of, next_slot, slot_at, week_slots
+from .slots import HALVES, WEEKDAYS, Slot, in_switch_window, monday_of, next_slot, slot_at, span, week_slots
 from .sync import AssignError, Sync, next_color
 
 HERE = Path(__file__).parent
@@ -119,7 +119,8 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
             "base": base, "user": user if signed_in else "", "viewer": user, "flashes": msgs,
             "status": status_line() if signed_in and not name.startswith("_") else None,
             "sheet": sync.status() if sync and signed_in else None,
-            "now_slot": slot_at(clock()), "WEEKDAYS": WEEKDAYS, "HALVES": HALVES, "static_v": static_v, **ctx})
+            "now_slot": slot_at(clock()), "switching": in_switch_window(clock()), "WEEKDAYS": WEEKDAYS, "HALVES": HALVES,
+            "SPAN": {h: span(h) for h in HALVES}, "static_v": static_v, **ctx})
 
     def is_student_email(email: str) -> bool:
         return email.rsplit("@", 1)[-1] in cfg.student_domains
@@ -504,7 +505,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         return f"{raw}@{student_domain}" if raw and "@" not in raw else raw
 
     def slot_text(weekday: int, half: str) -> str:
-        return f"{WEEKDAYS[weekday]} {'08:00-20:00' if half == 'day' else '20:00-08:00 (overnight)'}"
+        return f"{WEEKDAYS[weekday]} {span(half, '-')}{' (overnight)' if half == 'night' else ''}"
 
     def group_assignment(group_id: int) -> dict:
         """PC, term and weekly slots a group holds (approved bookings), for status page and email."""

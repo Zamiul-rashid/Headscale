@@ -476,7 +476,7 @@
       "kind": "custom",
       "refersTo": "statusline",
       "description": "Panel strip under the shell: live slot, next change, enforcement switches, pending count.",
-      "html": "<div class=\"ds-status\"><span>Now <b>Sat 08:00-20:00</b></span><span class=\"ds-sw on\">Policy enforced</span><span class=\"ds-sw dry\">Device clean-up dry-run</span><span class=\"ds-sw\">PC switching off</span><a class=\"ds-pending\" href=\"#\">4 awaiting approval</a></div>",
+      "html": "<div class=\"ds-status\"><span>Now <b>Sat 06:00-17:55</b></span><span class=\"ds-sw on\">Policy enforced</span><span class=\"ds-sw dry\">Device clean-up dry-run</span><span class=\"ds-sw\">PC switching off</span><a class=\"ds-pending\" href=\"#\">4 awaiting approval</a></div>",
       "css": ".ds-status{display:flex;flex-wrap:wrap;align-items:center;gap:4px 20px;padding:8px 20px;background:var(--panel,#eef2f6);border-bottom:1px solid var(--rule-soft,#c6cfd9);font:400 13px/1.5 var(--font,system-ui,sans-serif);color:var(--ink,#15202b);font-variant-numeric:tabular-nums}.ds-sw{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2,#47525e)}.ds-sw::before{content:'';width:8px;height:8px;border-radius:50%;border:1.5px solid var(--ink-3,#66717d);box-sizing:border-box}.ds-sw.on::before{background:var(--green,#1e6b3b);border-color:var(--green,#1e6b3b)}.ds-sw.dry::before{border-color:var(--amber,#7a4f00)}.ds-pending{color:var(--amber,#7a4f00);font-weight:700;text-decoration:none}"
     },
     {

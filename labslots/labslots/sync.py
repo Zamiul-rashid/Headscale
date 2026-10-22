@@ -28,6 +28,7 @@ from .hub import SERVER_RE
 from .policy import SLUG_RE, TAG_RE
 from .sheet_style import style_requests
 from .sheets import SheetsError, a1, quote
+from .slots import SWITCH_WINDOW, span
 
 log = logging.getLogger("labslots.sync")
 
@@ -52,7 +53,7 @@ HEADERS = {
     ENROLLMENTS: ["#", "Sent", "Status", "Group", "Thesis", "Supervisor", "Co-supervisor", "Members",
                  "Hardware needs", "Decided by", "Note"],
 }
-ROUTINE_HEADER = ["PC"] + [f"{WEEKDAYS[wd]} {half}\n{'08–20' if half == 'day' else '20–08'}" for wd, half in SLOT_COLS]
+ROUTINE_HEADER = ["PC"] + [f"{WEEKDAYS[wd]} {half}\n{span(half)}" for wd, half in SLOT_COLS]
 # Highlighter colours for groups, in an order where neighbours differ in hue (yellow, green, pink, blue, ...).
 PALETTE = ("#ffe08a", "#b8e6b0", "#f7c6d9", "#bcdcf5", "#ffd0a6", "#d9ccf2", "#c9e7e1", "#f4d6b8",
            "#e9f0a6", "#a8dcd1", "#f2b8b0", "#c6d4f7", "#f7e3b0", "#d6eac3", "#e8c9ef", "#b9e3ef")
@@ -72,7 +73,8 @@ README_TEXT = [
     ["only the group in a slot can reach its PC over the lab network."],
     [""],
     ["Routine tabs (one per term): one row per PC, one column per slot. Pick a group's short code in a cell."],
-    ["  day = 08:00-20:00, night = 20:00-08:00 the next morning (Asia/Dhaka). A blank cell is a free slot."],
+    [f"  day = {span('day', '-')}, night = {span('night', '-')} the next morning (Asia/Dhaka). A blank cell is a free slot."],
+    [f"  Each slot ends {SWITCH_WINDOW.seconds // 60} minutes before the next starts: the outgoing group is shut out first."],
     ["Groups: one row per thesis group. Code becomes group:<code> and the Linux account grp-<code>."],
     ["  Short is what the Routine tabs show (blank = made from the code); Colour is its highlighter colour."],
     ["  Members: one BRACU email per line (Alt+Enter for a new line in a cell)."],

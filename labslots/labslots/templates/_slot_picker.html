@@ -3,7 +3,7 @@
   <p class="hint">Choose a term and a PC to see its week.</p>
 {% else %}
   <table class="mini picker">
-    <thead><tr><th scope="col"></th><th scope="col">08–20</th><th scope="col">20–08</th></tr></thead>
+    <thead><tr><th scope="col"></th><th scope="col">{{ SPAN.day }}</th><th scope="col">{{ SPAN.night }}</th></tr></thead>
     <tbody>
     {% for wd in range(7) %}
       <tr>
@@ -11,7 +11,7 @@
         {% for half in HALVES %}{% set t = taken.get((wd, half)) %}
         <td class="pick {{ half }}">
           {% if t %}<span class="code-mark" style="--mark: {{ t.color }}" title="{{ t.name }}">{{ t.short or t.slug }}</span>
-          {% else %}<label class="pickbox"><input type="checkbox" name="slot" value="{{ wd }}-{{ half }}"><span>{{ WEEKDAYS[wd] }} {{ '08–20' if half == 'day' else '20–08' }}</span></label>{% endif %}
+          {% else %}<label class="pickbox"><input type="checkbox" name="slot" value="{{ wd }}-{{ half }}"><span>{{ WEEKDAYS[wd] }} {{ SPAN[half] }}</span></label>{% endif %}
         </td>
         {% endfor %}
       </tr>

@@ -1,9 +1,11 @@
-"""Slot arithmetic for the weekly 12-hour schedule in the proposal (proposal/proposal.tex).
+"""Slot arithmetic for the weekly schedule in the proposal (proposal/proposal.tex).
 
-Every PC has 14 slots a week: a day slot 08:00-20:00 and a night slot
-20:00-08:00 (next morning) on each weekday. A night slot belongs to the
-date it starts on, so Monday's night slot runs Mon 20:00 -> Tue 08:00.
-All times are local (Asia/Dhaka by default).
+Every PC has 14 slots a week: a day slot 06:00-17:55 and a night slot
+18:00-05:55 (next morning) on each weekday. A night slot belongs to the
+date it starts on, so Monday's night slot runs Mon 18:00 -> Tue 05:55.
+Each slot ends SWITCH_WINDOW before the next one starts; in that window no
+group has access while the outgoing group is shut out and the incoming one
+waits. All times are local (Asia/Dhaka by default).
 """
 
 from __future__ import annotations
@@ -11,8 +13,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
-DAY_START = 8
-NIGHT_START = 20
+DAY_START = 6
+NIGHT_START = 18
+SWITCH_WINDOW = timedelta(minutes=5)
 HALVES = ("day", "night")
 WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -33,23 +36,32 @@ class Slot:
 
     @property
     def end(self) -> datetime:
-        if self.half == "day":
-            return datetime.combine(self.date, time(NIGHT_START))
-        return datetime.combine(self.date + timedelta(days=1), time(DAY_START))
+        """When the group's access ends: SWITCH_WINDOW before the next slot starts."""
+        return next_slot(self).start - SWITCH_WINDOW
 
     @property
     def label(self) -> str:
-        span = "08:00-20:00" if self.half == "day" else "20:00-08:00"
-        return f"{WEEKDAYS[self.weekday]} {self.date:%d %b} {span}"
+        return f"{WEEKDAYS[self.weekday]} {self.date:%d %b} {span(self.half, '-')}"
+
+
+def span(half: str, sep: str = "–") -> str:
+    """A half's hours, e.g. '06:00–17:55'."""
+    s = Slot(date(2026, 1, 5), half)
+    return f"{s.start:%H:%M}{sep}{s.end:%H:%M}"
 
 
 def slot_at(now: datetime) -> Slot:
-    """The slot that contains `now` (naive local time)."""
+    """The slot that contains `now` (naive local time), its switch window included."""
     if now.hour >= NIGHT_START:
         return Slot(now.date(), "night")
     if now.hour < DAY_START:
         return Slot(now.date() - timedelta(days=1), "night")
     return Slot(now.date(), "day")
+
+
+def in_switch_window(now: datetime) -> bool:
+    """Between a slot's end and the next slot's start: no group has access."""
+    return now >= slot_at(now).end
 
 
 def next_slot(slot: Slot) -> Slot:
