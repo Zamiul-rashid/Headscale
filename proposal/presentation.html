@@ -37,6 +37,15 @@ body.render header.bar,body.render .notes,body.render footer.end{display:none}
 body.render .slide{display:none;margin:0;padding:0;max-width:none}
 body.render .slide.on{display:block}
 body.render .frame{width:1920px;height:1080px;border-radius:0;box-shadow:none}
+@page{size:1920px 1080px;margin:0}
+@media print{
+  html,body{background:#fff}
+  header.bar,.notes,footer.end{display:none}
+  .slide{display:block;max-width:none;margin:0;padding:0;break-after:page}
+  .frame{width:1920px;height:1080px;aspect-ratio:auto;border-radius:0;box-shadow:none}
+  .frame>section{transform:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
