@@ -1,0 +1,576 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-17T14:31:47+00:00",
+  "title": "Design System: BRACU CSE Research Lab · Slots",
+  "extensions": {
+    "colorMeta": {
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "#ffffff",
+        "cssVar": "--sheet",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Layer",
+        "canonical": "#eef2f6",
+        "cssVar": "--panel",
+        "tonalRamp": [
+          "#090b0e",
+          "#222528",
+          "#3f4246",
+          "#5e6265",
+          "#7f8386",
+          "#a2a5a9",
+          "#c6cacd",
+          "#ebeff3"
+        ]
+      },
+      "panel-2": {
+        "role": "neutral",
+        "displayName": "Panel Deep",
+        "canonical": "#dfe6ee",
+        "cssVar": "--panel-2",
+        "tonalRamp": [
+          "#070c11",
+          "#20262b",
+          "#3d4349",
+          "#5c6269",
+          "#7d838a",
+          "#9fa6ad",
+          "#c3cad2",
+          "#e8eff7"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#15202b",
+        "cssVar": "--ink",
+        "tonalRamp": [
+          "#040c16",
+          "#1b2631",
+          "#374350",
+          "#566370",
+          "#778492",
+          "#99a7b5",
+          "#bccbda",
+          "#e3f0fe"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#47525e",
+        "cssVar": "--ink-2",
+        "tonalRamp": [
+          "#040c15",
+          "#1c2631",
+          "#39434f",
+          "#57636f",
+          "#788491",
+          "#9aa7b4",
+          "#becbd9",
+          "#e3f0ff"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#66717d",
+        "cssVar": "--ink-3",
+        "tonalRamp": [
+          "#050c15",
+          "#1d2630",
+          "#39434e",
+          "#58626e",
+          "#788490",
+          "#9ba6b3",
+          "#becbd8",
+          "#e3f0fe"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#15202b",
+        "cssVar": "--rule",
+        "tonalRamp": [
+          "#040c16",
+          "#1b2631",
+          "#374350",
+          "#566370",
+          "#778492",
+          "#99a7b5",
+          "#bccbda",
+          "#e3f0fe"
+        ]
+      },
+      "rule-soft": {
+        "role": "neutral",
+        "displayName": "Soft Rule",
+        "canonical": "#c6cfd9",
+        "cssVar": "--rule-soft",
+        "tonalRamp": [
+          "#060c12",
+          "#1f262d",
+          "#3b434b",
+          "#5a626b",
+          "#7b838c",
+          "#9da6b0",
+          "#c1cad4",
+          "#e6f0fa"
+        ]
+      },
+      "field-stroke": {
+        "role": "neutral",
+        "displayName": "Field Stroke",
+        "canonical": "#8995a2",
+        "cssVar": null,
+        "tonalRamp": [
+          "#040c15",
+          "#1c2630",
+          "#39434e",
+          "#57636f",
+          "#788490",
+          "#9aa7b4",
+          "#becbd8",
+          "#e3f0fe"
+        ]
+      },
+      "routine-blue": {
+        "role": "primary",
+        "displayName": "Routine Blue",
+        "canonical": "#1d4e89",
+        "cssVar": "--blue",
+        "tonalRamp": [
+          "#000b1f",
+          "#03244b",
+          "#0f417b",
+          "#31629f",
+          "#5284c4",
+          "#74a8ea",
+          "#a6ccfe",
+          "#e5f0fe"
+        ]
+      },
+      "routine-blue-deep": {
+        "role": "primary",
+        "displayName": "Routine Blue Deep",
+        "canonical": "#163d6c",
+        "cssVar": "--blue-deep",
+        "tonalRamp": [
+          "#000b1f",
+          "#02244c",
+          "#1c4272",
+          "#3b6395",
+          "#5c85b9",
+          "#7da8de",
+          "#a9ccfa",
+          "#e4f0ff"
+        ]
+      },
+      "routine-blue-soft": {
+        "role": "primary",
+        "displayName": "Routine Blue Soft",
+        "canonical": "#d6e3f2",
+        "cssVar": "--blue-soft",
+        "tonalRamp": [
+          "#040c15",
+          "#1c2631",
+          "#39434f",
+          "#57626f",
+          "#788491",
+          "#9aa6b5",
+          "#becbd9",
+          "#e4f0fe"
+        ]
+      },
+      "routine-blue-tint": {
+        "role": "primary",
+        "displayName": "Today Tint",
+        "canonical": "#e6eef8",
+        "cssVar": "--blue-tint",
+        "tonalRamp": [
+          "#070c12",
+          "#20262d",
+          "#3c434b",
+          "#5b626a",
+          "#7c838c",
+          "#9ea6af",
+          "#c2cad4",
+          "#e7eff9"
+        ]
+      },
+      "on-blue": {
+        "role": "primary",
+        "displayName": "On Blue",
+        "canonical": "#ffffff",
+        "cssVar": "--blue-ink",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "state-red": {
+        "role": "state",
+        "displayName": "Red",
+        "canonical": "#b42318",
+        "cssVar": "--red",
+        "tonalRamp": [
+          "#1e0100",
+          "#4d0100",
+          "#7e0b05",
+          "#b12015",
+          "#da4a3b",
+          "#fb7866",
+          "#fdb4a8",
+          "#ffe9e5"
+        ]
+      },
+      "state-red-tint": {
+        "role": "state",
+        "displayName": "Red Tint",
+        "canonical": "#fdecea",
+        "cssVar": "--red-tint",
+        "tonalRamp": [
+          "#120807",
+          "#2e2220",
+          "#4c3e3d",
+          "#6c5d5c",
+          "#8d7e7d",
+          "#b1a19f",
+          "#d5c5c3",
+          "#fbeae8"
+        ]
+      },
+      "state-amber": {
+        "role": "state",
+        "displayName": "Amber",
+        "canonical": "#7a4f00",
+        "cssVar": "--amber",
+        "tonalRamp": [
+          "#130900",
+          "#342003",
+          "#5b3a01",
+          "#83570f",
+          "#a67838",
+          "#cb9b5c",
+          "#f0bf7f",
+          "#ffebd3"
+        ]
+      },
+      "state-amber-tint": {
+        "role": "state",
+        "displayName": "Amber Tint",
+        "canonical": "#fff3d6",
+        "cssVar": "--amber-tint",
+        "tonalRamp": [
+          "#100a00",
+          "#2d240c",
+          "#4b4129",
+          "#6b6047",
+          "#8c8167",
+          "#afa489",
+          "#d4c8ac",
+          "#faeed1"
+        ]
+      },
+      "state-green": {
+        "role": "state",
+        "displayName": "Green",
+        "canonical": "#1e6b3b",
+        "cssVar": "--green",
+        "tonalRamp": [
+          "#010f04",
+          "#052d15",
+          "#065027",
+          "#277242",
+          "#4b9562",
+          "#6fb884",
+          "#93dea7",
+          "#c8fed5"
+        ]
+      },
+      "state-green-tint": {
+        "role": "state",
+        "displayName": "Green Tint",
+        "canonical": "#e5f3ea",
+        "cssVar": "--green-tint",
+        "tonalRamp": [
+          "#050e08",
+          "#1d2821",
+          "#3a453e",
+          "#59655d",
+          "#79867e",
+          "#9ca9a0",
+          "#c0cdc4",
+          "#e5f3ea"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "One page title per page; 20px under 760px. No display tier."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings after a 2px rule, cell editor heading, phone PC name."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text and inputs; tabular numerals; descriptions capped at 70ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, navigation, form labels, status line."
+      },
+      "code-mark": {
+        "displayName": "Code mark",
+        "purpose": "Group short code, uppercase, on the group's highlighter tint."
+      },
+      "table-head": {
+        "displayName": "Table head",
+        "purpose": "Uppercase column heads and the legend label only; never an eyebrow."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Hints, meta, key, day and half sub-labels."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "PC tags, IPs, account names, code and policy previews (12px in pre)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ring-cell-hover",
+        "value": "inset 0 0 0 2px #1d4e89",
+        "purpose": "Pointer over an editable routine cell."
+      },
+      {
+        "name": "ring-cell-selected",
+        "value": "inset 0 0 0 2px #15202b",
+        "purpose": "Cell shown in the editor."
+      },
+      {
+        "name": "ring-cell-clash",
+        "value": "inset 0 0 0 2px #b42318",
+        "purpose": "Two approved groups in one slot."
+      },
+      {
+        "name": "ring-live-selected",
+        "value": "inset 0 0 0 2px #ffffff, inset 0 0 0 4px #15202b",
+        "purpose": "Hover or selection on the reversed live cell."
+      },
+      {
+        "name": "underline-nav-current",
+        "value": "inset 0 -3px 0 #ffffff",
+        "purpose": "Current page tab in the shell."
+      },
+      {
+        "name": "ring-legend-chosen",
+        "value": "inset 0 0 0 1px #15202b",
+        "purpose": "Group currently being marked."
+      }
+    ],
+    "motion": [
+      {
+        "name": "mark-dim",
+        "value": "opacity .18s cubic-bezier(.2, .7, .2, 1)",
+        "purpose": "Non-marked cells' code marks fade to 0.2 when a group is chosen."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition: none; scroll-behavior: auto",
+        "purpose": "All transitions and smooth scrolling off under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "editor-stacks",
+        "value": "1100px"
+      },
+      {
+        "name": "phone",
+        "value": "760px"
+      }
+    ],
+    "focus": {
+      "value": "2px solid #1d4e89, offset 2px (0 on fields)",
+      "purpose": "Universal keyboard focus."
+    },
+    "groupTints": {
+      "source": "per-group data (colour input); DB default #cfe2ff, CSS fallback #d6e3f2",
+      "illustrativeSet": [
+        "#ffe08a",
+        "#b8e6b0",
+        "#f7c6d9",
+        "#bcdcf5",
+        "#ffd0a6",
+        "#d9ccf2"
+      ],
+      "note": "Illustrative dev-server sample, not tokens; any pale tint holding bold Ink at 4.5:1 or better."
+    }
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Ruled default action: Ink stroke on Sheet.",
+      "html": "<button class=\"ds-btn\">Run enforcement now</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 13px/1 var(--font,system-ui,sans-serif);padding:9px 16px;min-height:36px;border-radius:4px;border:1px solid var(--ink,#15202b);background:var(--sheet,#fff);color:var(--ink,#15202b);cursor:pointer;white-space:nowrap}.ds-btn:hover{background:var(--panel,#eef2f6)}.ds-btn:active{background:var(--panel-2,#dfe6ee)}.ds-btn:focus-visible{outline:2px solid var(--focus,#1d4e89);outline-offset:2px}.ds-btn:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action per decision point, in Routine Blue.",
+      "html": "<button class=\"ds-btn-primary\">Add request</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;font:600 13px/1 var(--font,system-ui,sans-serif);padding:9px 16px;min-height:36px;border-radius:4px;border:1px solid var(--blue,#1d4e89);background:var(--blue,#1d4e89);color:var(--blue-ink,#fff);cursor:pointer}.ds-btn-primary:hover{background:var(--blue-deep,#163d6c)}.ds-btn-primary:focus-visible{outline:2px solid var(--focus,#1d4e89);outline-offset:2px}"
+    },
+    {
+      "name": "Danger Button (small)",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive row or editor action; always confirmed.",
+      "html": "<button class=\"ds-btn-danger\">Remove from slot</button>",
+      "css": ".ds-btn-danger{display:inline-flex;align-items:center;font:600 12px/1 var(--font,system-ui,sans-serif);padding:5px 12px;min-height:28px;border-radius:4px;border:1px solid var(--red,#b42318);background:var(--sheet,#fff);color:var(--red,#b42318);cursor:pointer}.ds-btn-danger:hover{background:var(--red-tint,#fdecea)}.ds-btn-danger:focus-visible{outline:2px solid var(--focus,#1d4e89);outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Stacked label, 36px field, blue focus outline.",
+      "html": "<label class=\"ds-label\">Note <input class=\"ds-input\" placeholder=\"Optional, e.g. agreed in lab meeting\"></label>",
+      "css": ".ds-label{display:flex;flex-direction:column;gap:4px;font:600 13px/1.5 var(--font,system-ui,sans-serif);color:var(--ink,#15202b)}.ds-input{font:400 14px/1.4 var(--font,system-ui,sans-serif);color:var(--ink,#15202b);background:var(--sheet,#fff);border:1px solid #8995a2;border-radius:4px;padding:7px 12px;min-height:36px}.ds-input:hover{border-color:var(--ink-2,#47525e)}.ds-input:focus-visible{outline:2px solid var(--focus,#1d4e89);outline-offset:0;border-color:var(--focus,#1d4e89)}"
+    },
+    {
+      "name": "Shell Navigation",
+      "kind": "nav",
+      "refersTo": "shell",
+      "description": "Sticky Routine Blue bar: brand lockup, tabs with inset underline on the current page, pending count.",
+      "html": "<nav class=\"ds-shell\"><a class=\"ds-brand\" href=\"#\"><b>BRACU CSE Research Lab</b><span>PC slots</span></a><a class=\"ds-tab\" href=\"#\">Now</a><a class=\"ds-tab\" aria-current=\"page\" href=\"#\">Schedule</a><a class=\"ds-tab\" href=\"#\">Requests<span class=\"ds-count\">4</span></a></nav>",
+      "css": ".ds-shell{display:flex;align-items:stretch;gap:24px;padding:0 20px;min-height:52px;background:var(--blue,#1d4e89);font-family:var(--font,system-ui,sans-serif)}.ds-brand{display:flex;flex-direction:column;justify-content:center;color:#fff;text-decoration:none;line-height:1.15;padding:8px 0;margin-right:4px}.ds-brand b{font-size:14px}.ds-brand span{font-size:12px;color:var(--blue-soft,#d6e3f2)}.ds-tab{display:flex;align-items:center;padding:0 12px;color:var(--blue-soft,#d6e3f2);text-decoration:none;font-weight:600;font-size:13px}.ds-tab:hover{color:#fff}.ds-tab[aria-current=page]{color:#fff;box-shadow:inset 0 -3px 0 #fff}.ds-tab:focus-visible{outline:2px solid #fff;outline-offset:-2px}.ds-count{margin-left:4px;min-width:18px;padding:0 5px;border-radius:2px;background:#fff;color:var(--blue,#1d4e89);font-size:11px;line-height:18px;text-align:center}"
+    },
+    {
+      "name": "Status Line",
+      "kind": "custom",
+      "refersTo": "statusline",
+      "description": "Panel strip under the shell: live slot, next change, enforcement switches, pending count.",
+      "html": "<div class=\"ds-status\"><span>Now <b>Sat 08:00-20:00</b></span><span class=\"ds-sw on\">Policy enforced</span><span class=\"ds-sw dry\">Device clean-up dry-run</span><span class=\"ds-sw\">PC switching off</span><a class=\"ds-pending\" href=\"#\">4 awaiting approval</a></div>",
+      "css": ".ds-status{display:flex;flex-wrap:wrap;align-items:center;gap:4px 20px;padding:8px 20px;background:var(--panel,#eef2f6);border-bottom:1px solid var(--rule-soft,#c6cfd9);font:400 13px/1.5 var(--font,system-ui,sans-serif);color:var(--ink,#15202b);font-variant-numeric:tabular-nums}.ds-sw{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2,#47525e)}.ds-sw::before{content:'';width:8px;height:8px;border-radius:50%;border:1.5px solid var(--ink-3,#66717d);box-sizing:border-box}.ds-sw.on::before{background:var(--green,#1e6b3b);border-color:var(--green,#1e6b3b)}.ds-sw.dry::before{border-color:var(--amber,#7a4f00)}.ds-pending{color:var(--amber,#7a4f00);font-weight:700;text-decoration:none}"
+    },
+    {
+      "name": "Code Mark",
+      "kind": "chip",
+      "refersTo": "code-mark",
+      "description": "A group's bold capital code on its highlighter tint; pending is hollow, dashed, with '?'.",
+      "html": "<span class=\"ds-mark\" style=\"--mark:#ffe08a\">TH-A</span> <span class=\"ds-mark\" style=\"--mark:#b8e6b0\">TH-B</span> <span class=\"ds-mark ds-pending-mark\">TH-C?</span>",
+      "css": ".ds-mark{display:inline-block;font:700 13px/1.5 var(--font,system-ui,sans-serif);letter-spacing:.03em;text-transform:uppercase;color:var(--ink,#15202b);background:var(--mark,#d6e3f2);padding:1px 6px;border-radius:2px}.ds-pending-mark{background:transparent;font-weight:600;outline:1.5px dashed var(--ink-2,#47525e);outline-offset:-1.5px;color:var(--ink-2,#47525e)}"
+    },
+    {
+      "name": "Marking Legend",
+      "kind": "chip",
+      "refersTo": "legend",
+      "description": "Radio-chip legend that marks one group across the routine.",
+      "html": "<fieldset class=\"ds-legend\"><span class=\"ds-legend-label\">Mark</span><input type=\"radio\" name=\"dsm\" id=\"dsm0\" checked><label for=\"dsm0\">All groups</label><input type=\"radio\" name=\"dsm\" id=\"dsm1\"><label for=\"dsm1\"><span class=\"ds-swatch\" style=\"--mark:#f7c6d9\"></span>Thesis C (example)</label></fieldset>",
+      "css": ".ds-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:0;padding:0;margin:0;font-family:var(--font,system-ui,sans-serif)}.ds-legend-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2,#47525e);margin-right:4px}.ds-legend input{position:absolute;opacity:0;width:1px;height:1px}.ds-legend label{display:flex;align-items:center;gap:6px;padding:5px 12px 5px 8px;border:1px solid var(--rule-soft,#c6cfd9);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;background:var(--sheet,#fff);color:var(--ink,#15202b)}.ds-legend label:hover{border-color:var(--ink-2,#47525e)}.ds-legend input:checked+label{border-color:var(--ink,#15202b);box-shadow:inset 0 0 0 1px var(--ink,#15202b)}.ds-legend input:focus-visible+label{outline:2px solid var(--focus,#1d4e89);outline-offset:2px}.ds-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--mark);border:1px solid rgba(21,32,43,.25)}"
+    },
+    {
+      "name": "Routine Grid",
+      "kind": "custom",
+      "refersTo": "routine-cell",
+      "description": "The ruled weekly sheet: 2px day rules, today tinted, live cell reversed, hover ring.",
+      "html": "<table class=\"ds-routine\"><thead><tr><th class=\"ds-pc\">PC</th><th class=\"ds-day\">Fri<br><small>08-20</small></th><th class=\"ds-day ds-today\">Sat<br><small>08-20</small></th><th class=\"ds-today\">Sat<br><small>20-08</small></th></tr></thead><tbody><tr><th class=\"ds-pc\"><b>pc-41</b><span>tag:pc-41</span></th><td class=\"ds-cell ds-day\" tabindex=\"0\"><span class=\"ds-mark\" style=\"--mark:#bcdcf5\">TH-D</span></td><td class=\"ds-cell ds-day ds-live\" tabindex=\"0\"><span class=\"ds-mark\">TH-F</span></td><td class=\"ds-cell ds-tcell ds-free\" tabindex=\"0\"></td></tr></tbody></table>",
+      "css": ".ds-routine{border-collapse:separate;border-spacing:0;border:1px solid var(--rule,#15202b);border-radius:4px;font:400 13px/1.5 var(--font,system-ui,sans-serif);color:var(--ink,#15202b);font-variant-numeric:tabular-nums}.ds-routine th,.ds-routine td{border-right:1px solid var(--rule-soft,#c6cfd9);border-bottom:1px solid var(--rule-soft,#c6cfd9);padding:0}.ds-routine thead th{background:var(--panel,#eef2f6);font-weight:700;padding:8px 12px;border-bottom:1px solid var(--rule,#15202b)}.ds-routine small{font-weight:600;font-size:12px;color:var(--ink-3,#66717d)}.ds-routine thead th.ds-today{background:var(--blue,#1d4e89);color:#fff}.ds-routine thead th.ds-today small{color:var(--blue-soft,#d6e3f2)}.ds-routine .ds-day{border-left:2px solid var(--rule,#15202b)}.ds-pc{text-align:left;padding:8px 12px!important;border-right:2px solid var(--rule,#15202b)!important;background:var(--sheet,#fff)}.ds-pc b{display:block}.ds-pc span{font:400 12px var(--mono,ui-monospace,monospace);color:var(--ink-3,#66717d)}.ds-cell{width:72px;height:48px;padding:4px!important;text-align:center;cursor:pointer;background:var(--sheet,#fff)}.ds-cell.ds-tcell{background:var(--blue-tint,#e6eef8)}.ds-cell:hover{box-shadow:inset 0 0 0 2px var(--blue,#1d4e89)}.ds-cell:focus-visible{outline:2px solid var(--focus,#1d4e89);outline-offset:2px}.ds-cell.ds-live{background:var(--blue,#1d4e89)}.ds-cell.ds-live:hover{box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px var(--ink,#15202b)}.ds-free::after{content:'';display:block;width:8px;height:1px;margin:0 auto;background:var(--rule-soft,#c6cfd9)}.ds-mark{display:inline-block;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:var(--mark,#d6e3f2);padding:1px 6px;border-radius:2px}.ds-live .ds-mark{background:#fff;color:var(--blue,#1d4e89)}"
+    },
+    {
+      "name": "Notes",
+      "kind": "card",
+      "refersTo": "note",
+      "description": "Flat state messages with a tinted stroke; no shadow.",
+      "html": "<div class=\"ds-note ds-ok\">Booking approved.</div><div class=\"ds-note ds-warn\">No term yet. <a href=\"#\">Create a term</a>.</div><div class=\"ds-note ds-err\"><b>Fail-closed.</b> Admins only until fixed.</div>",
+      "css": ".ds-note{padding:12px 16px;margin:0 0 16px;border:1px solid var(--rule-soft,#c6cfd9);border-radius:4px;background:var(--panel,#eef2f6);font:400 14px/1.5 var(--font,system-ui,sans-serif);color:var(--ink,#15202b)}.ds-note a{color:var(--blue,#1d4e89)}.ds-ok{background:var(--green-tint,#e5f3ea);border-color:#b9dcc6}.ds-err{background:var(--red-tint,#fdecea);border-color:#f2b8b1;color:#7a160e}.ds-warn{background:var(--amber-tint,#fff3d6);border-color:#ecd49a;color:#4f3400}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Class Routine",
+    "overview": "**Creative North Star: \"The Class Routine\"**\n\nThe desk is set like the department's printed class routine: a white sheet, days running across, PCs running down, group codes typed into ruled cells. Ink rules carry the structure and grow heavier at each day boundary. Routine blue owns two things only: the shell bar that frames every page, and time (today's column, the slot running now, the primary action). Everything else is ink on white, with a pale blue-grey second layer for panels, table heads and the status line.\n\nDensity is spreadsheet density. The full week for every PC has to stay readable in one view on a laptop, so the type is small and even (14px body, 13px inside the grid), numerals are tabular everywhere, and nothing decorative competes with state. What is live, what is pending and what has failed outrank everything else. Each thesis group appears as a highlighter tint behind its bold capital code, the way a student marks their own classes on a printed routine. Choosing a group in the legend highlights its cells and dims the rest.\n\nThe world rejects the admin-template look: no cards, no pills, no grey sidebar, no drop shadows. Grouping comes from a ruled heading or a flat panel fill. On a phone the routine turns into one PC's week per screen, and each swipe snaps to the next PC.",
+    "keyCharacteristics": [
+      "White sheet ground with ink rules: 2px at day boundaries and the PC column, 1px soft rules inside a day.",
+      "Routine blue for the shell, today and the live slot, never as decoration.",
+      "Group identity is a highlighter tint behind a bold uppercase code; pending is hollow and dashed.",
+      "System sans throughout with tabular numerals; one type size inside the grid.",
+      "Flat colour only: depth comes from the panel layer, state comes from inset rings."
+    ],
+    "rules": [
+      {
+        "name": "The Routine Blue Rule",
+        "body": "Blue means the frame or the clock: the shell, today, the live slot, the one primary action, links and focus. If blue isn't marking one of those, it shouldn't be there.",
+        "section": "colors"
+      },
+      {
+        "name": "The Highlighter Rule",
+        "body": "A group's colour appears only as the tint behind its bold capital code and in its legend swatch. Never use it as a text colour, a border, a row fill or a chart series.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Reserve Rule",
+        "body": "Red, amber and green are spent only on state (failed, waiting, healthy), always paired with a word. They are never used for decoration or categories.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Size Grid Rule",
+        "body": "Inside the routine everything is set at 13px. Weight, case and tint separate code from caption; size never does.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Numerals are tabular everywhere. Times, dates and counts must line up down a column.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Sheet Rule",
+        "body": "Surfaces never lift. If something needs to stand apart, give it the Panel fill or a rule; box-shadow is used only as an inset ring for hover, selection, clash or the current tab.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** frame every page with the Routine Blue shell and the Panel status line. State is always one glance away.",
+      "**Do** separate days with 2px Ink rules, and separate halves and rows with 1px Soft Rules.",
+      "**Do** show a group only as its bold uppercase code on its highlighter tint, and show pending as a hollow dashed code with \"?\".",
+      "**Do** pair every state colour with a word (\"Switch failed\", \"dry-run\", \"4 awaiting approval\").",
+      "**Do** build sections from a 2px Ink rule and a 17px heading, and use the flat Panel fill when a block must stand apart.",
+      "**Do** keep numerals tabular and keep the grid at a single 13px size.",
+      "**Do** keep Ink 3 (4.9:1) as the lightest text on white."
+    ],
+    "donts": [
+      "**Don't** wrap content in cards with drop shadows, and don't add a grey sidebar. The admin-template look is what this world refuses.",
+      "**Don't** use outer or ambient shadows. Inset rings for hover, selection, clash and the current tab are the only box-shadows.",
+      "**Don't** use rounded-full pills for chips, badges or buttons. Corners stop at 4px, and circles are reserved for 8px status dots.",
+      "**Don't** spend Routine Blue on decoration, illustration or secondary emphasis.",
+      "**Don't** use a group's colour as text, border or background outside its code mark and swatch.",
+      "**Don't** put uppercase eyebrow labels above headings. Uppercase tracked type is for column heads and the legend label only.",
+      "**Don't** invent or imitate a BRACU logo or identity asset. The lab name in text is the brand."
+    ]
+  }
+}
