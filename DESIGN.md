@@ -289,12 +289,12 @@ Plain and ruled, like a form on a notice board.
 - **Style:** Sheet fill, 1px Field Stroke, 4px radius, 36px tall, 14px text. Labels stack above at 13px/600, with hints at 12px Ink 3. Checkbox and radio controls are 16px and use Routine Blue as the accent colour.
 - **Focus:** 2px Routine Blue outline at zero offset, and the border turns blue.
 - **Error / Disabled:** form errors use the red note at the top of the page, one line per problem, naming the field and the fix. What was typed is kept. Read-only fields (the student's own email) take the Panel fill and a Soft Rule stroke.
-- **Long forms** (the enrolment form) split into parts: each part has a 1px Soft Rule above it, its 13px/700 heading and an Ink 3 hint in a 200px left column, and its fields on the right. On a phone the parts stack.
+- **Long forms** (the enrollment form) split into parts: each part has a 1px Soft Rule above it, its 13px/700 heading and an Ink 3 hint in a 200px left column, and its fields on the right. On a phone the parts stack.
 - **Lists of people** (supervisors, members) are one ruled table each: 30px in-cell inputs, an Ink 2 role or row number in the first column, a quiet Remove button per optional row and an "Add" button under the table. On a phone each row becomes a block of labelled fields.
 - **Fixed suffix:** an address that must be on one domain is typed as its local part, with the domain shown as a Panel-filled suffix joined to the input.
 
 ### Navigation
-- **Style:** a sticky Routine Blue shell. The brand is a two-line lockup (lab name at 14px/700, "PC slots" at 12px in Routine Blue Soft). Tabs are 13px/600 in Routine Blue Soft and turn white on hover. The current page is white with a 3px white inset underline. The Enrolments tab carries a 2px-radius white count badge with blue numerals: enrolments waiting. The signed-in user and an outlined Sign out button sit at the right.
+- **Style:** a sticky Routine Blue shell. The brand is a two-line lockup (lab name at 14px/700, "PC slots" at 12px in Routine Blue Soft). Tabs are 13px/600 in Routine Blue Soft and turn white on hover. The current page is white with a 3px white inset underline. The Enrollments tab carries a 2px-radius white count badge with blue numerals: enrollments waiting. The signed-in user and an outlined Sign out button sit at the right.
 - **Mobile:** brand and user share the first row. The tabs move to a full-width horizontal scroller below.
 
 ### Status line

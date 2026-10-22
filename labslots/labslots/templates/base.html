@@ -15,10 +15,10 @@
     {% if user %}
     {% set p = request.url.path %}
     <nav class="nav" aria-label="Main">
-      {% for href, label in [('/', 'Now'), ('/calendar', 'Calendar'), ('/enrolments', 'Enrolments'), ('/pcs', 'PCs'),
+      {% for href, label in [('/', 'Now'), ('/calendar', 'Calendar'), ('/enrollments', 'Enrollments'), ('/pcs', 'PCs'),
                              ('/terms', 'Semesters'), ('/settings', 'Settings'), ('/audit', 'Log')] %}
         {% set here = (p == base ~ '/') if href == '/' else p.startswith(base ~ href) %}
-        <a href="{{ base }}{{ href }}" {% if here %}aria-current="page"{% endif %}>{{ label }}{% if href == '/enrolments' and status and status.pending %}<span class="count" aria-label="{{ status.pending }} pending">{{ status.pending }}</span>{% endif %}</a>
+        <a href="{{ base }}{{ href }}" {% if here %}aria-current="page"{% endif %}>{{ label }}{% if href == '/enrollments' and status and status.pending %}<span class="count" aria-label="{{ status.pending }} pending">{{ status.pending }}</span>{% endif %}</a>
       {% endfor %}
     </nav>
     <form method="post" action="{{ base }}/logout" class="who">
@@ -45,7 +45,7 @@
     {% if sheet %}{% if sheet.error %}<a class="alert" href="{{ base }}/settings#sheet" title="{{ sheet.error }}">Sheet unreachable: enforcing the last good copy</a>
     {% else %}<a class="switch on" href="{{ sheet.url }}" target="_blank" rel="noopener">Sheet read {{ (sheet.last_ok or '')[11:16] or 'not yet' }}</a>{% endif %}
     {% if sheet.problems %}<a class="pending" href="{{ sheet.url }}" target="_blank" rel="noopener">{{ sheet.problems }} Sheet problem{{ 's' if sheet.problems != 1 }}</a>{% endif %}{% endif %}
-    {% if status.pending %}<a class="pending" href="{{ base }}/enrolments">{{ status.pending }} enrolment{{ 's' if status.pending != 1 }} waiting</a>{% endif %}
+    {% if status.pending %}<a class="pending" href="{{ base }}/enrollments">{{ status.pending }} enrollment{{ 's' if status.pending != 1 }} waiting</a>{% endif %}
   </div>
 </div>
 {% endif %}

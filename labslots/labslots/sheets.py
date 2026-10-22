@@ -236,6 +236,11 @@ class FakeSheets:
                 title = req["addSheet"]["properties"]["title"]
                 self.tabs.setdefault(title, [])
                 replies.append({"addSheet": {"properties": {"title": title, "sheetId": list(self.tabs).index(title)}}})
+            elif "updateSheetProperties" in req and "title" in req["updateSheetProperties"]["fields"]:
+                props = req["updateSheetProperties"]["properties"]
+                old = list(self.tabs)[props["sheetId"]]
+                self.tabs = {(props["title"] if t == old else t): rows for t, rows in self.tabs.items()}
+                replies.append({})
             elif "deleteSheet" in req:
                 sid = req["deleteSheet"]["sheetId"]
                 title = list(self.tabs)[sid]

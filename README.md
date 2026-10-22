@@ -18,7 +18,7 @@ the group's account, with no key or password.
 ```
 labslots/                    the slot system (Python 3.11+, FastAPI, SQLite)
   labslots/
-    web.py                   hub: admin pages, enrolment, settings, agent API, Sheet sync loop
+    web.py                   hub: admin pages, enrollment, settings, agent API, Sheet sync loop
     sync.py                  Google Sheet -> SQLite; the Sheet is the source of truth, SQLite the last good copy
     sheets.py                Google Sheets API client (service account)
     sheet_style.py           formatting applied to the Sheet
@@ -30,7 +30,7 @@ labslots/                    the slot system (Python 3.11+, FastAPI, SQLite)
     sshexec.py               runs slot-switch on a PC over Tailscale SSH
     slots.py                 slot arithmetic
     db.py                    SQLite schema and queries
-    mailer.py                outgoing email for enrolment decisions
+    mailer.py                outgoing email for enrollment decisions
     backup.py                nightly copies of the SQLite databases
     config.py                settings from the environment; secrets are read from files
     pc/setup-lab-pc.sh       prepares a lab PC: Tailscale SSH, the labsched account, slot-switch
@@ -85,7 +85,7 @@ Hub (`labslots` service):
 | `LABSLOTS_BOOTSTRAP_ADMINS` | comma-separated admin emails that always exist (the Sheet's Admins tab adds more) |
 | `LABSLOTS_SHEET`, `GOOGLE_SA_KEY_FILE` | the schedule Sheet's ID, and the service-account key that reads it |
 | `OIDC_ISSUER`, `GOOGLE_OAUTH_CLIENT_FILE` | Google sign-in; the OAuth client JSON as downloaded |
-| `LABSLOTS_STUDENT_DOMAINS` | domains students may enrol with (default `g.bracu.ac.bd`) |
+| `LABSLOTS_STUDENT_DOMAINS` | domains students may enroll with (default `g.bracu.ac.bd`) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_FROM`, `SMTP_PASSWORD_FILE` | email; off while host or sender is empty |
 | `LABSLOTS_DATA`, `LABSLOTS_DB`, `SESSION_SECRET_FILE`, `LABSLOTS_INTERVAL`, `LABSLOTS_DEV_LOGIN` | data directory, database, session key, Sheet read interval (s), demo sign-in |
 

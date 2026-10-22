@@ -210,3 +210,16 @@ def test_read_me_is_kept_current(db):
     writes = sheet.writes
     s.pull()
     assert sheet.writes == writes                     # unchanged: not rewritten every pull
+
+
+def test_enrolments_tab_from_before_is_renamed(db):
+    from labslots.sync import ENROLLMENTS
+    seed(db)
+    sync = Sync(db, FakeSheets())
+    sync.pull()
+    sheet = sync.sheet
+    sheet.tabs = {("Enrolments" if t == ENROLLMENTS else t): rows for t, rows in sheet.tabs.items()}  # an older Sheet
+    rows_before = sheet.tabs["Enrolments"]
+    rep = sync.pull()
+    assert rep.ok, rep.error
+    assert "Enrolments" not in sheet.tabs and sheet.tabs[ENROLLMENTS] == rows_before   # same tab, new name

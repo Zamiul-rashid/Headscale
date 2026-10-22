@@ -198,27 +198,27 @@ class DB:
             "AND t.start_date <= ? AND t.end_date >= ?", (weekday, half, iso, iso))
 
 
-    # -- enrolments -------------------------------------------------------------
-    def enrolment(self, eid: int) -> dict | None:
+    # -- enrollments -------------------------------------------------------------
+    def enrollment(self, eid: int) -> dict | None:
         row = self.one("SELECT * FROM enrolments WHERE id = ?", (eid,))
         if not row:
             return None
         e = dict(row)
         e["members"] = [dict(m) for m in self.q(
             "SELECT name, student_id, email FROM enrolment_members WHERE enrolment_id = ? ORDER BY position", (eid,))]
-        # The first is the supervisor, the rest co-supervisors. Enrolments sent before emails were asked for
+        # The first is the supervisor, the rest co-supervisors. Enrollments sent before emails were asked for
         # only have the names, in the supervisor/co_supervisor columns.
         e["supervisors"] = [dict(s) for s in self.q(
             "SELECT name, email FROM enrolment_supervisors WHERE enrolment_id = ? ORDER BY position", (eid,))] or \
             [{"name": n.strip(), "email": ""} for n in [e["supervisor"], *e["co_supervisor"].split(",")] if n.strip()]
         return e
 
-    def enrolments_for(self, email: str) -> list[dict]:
-        """Enrolments a person submitted or is listed in, newest first."""
+    def enrollments_for(self, email: str) -> list[dict]:
+        """Enrollments a person submitted or is listed in, newest first."""
         ids = [r["id"] for r in self.q(
             "SELECT DISTINCT e.id FROM enrolments e LEFT JOIN enrolment_members m ON m.enrolment_id = e.id "
             "WHERE e.submitted_by = ? OR m.email = ? ORDER BY e.id DESC", (email, email))]
-        return [self.enrolment(i) for i in ids]
+        return [self.enrollment(i) for i in ids]
 
 
 def short_code(slug: str) -> str:

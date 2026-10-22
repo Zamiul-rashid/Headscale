@@ -3,15 +3,15 @@
 {% block body %}
 <div class="pagehead">
   <div>
-    <h1>{{ 'Enrol your thesis group' if can_apply and not enrolments else 'Your thesis group' }}</h1>
+    <h1>{{ 'Enroll your thesis group' if can_apply and not enrollments else 'Your thesis group' }}</h1>
     <p>Signed in as {{ me }}. An admin assigns each enrolled group a lab PC and its weekly slots.</p>
     {% if me_admin %}<p class="small"><a href="{{ base }}/">Open the admin desk</a></p>
     {% else %}<p class="muted small">Lab admin? {{ me }} is not on the admin list. Sign out, then sign in with your admin Google account.</p>{% endif %}
   </div>
 </div>
 
-{% for e in enrolments %}
-<section class="section enrolment-status">
+{% for e in enrollments %}
+<section class="section enrollment-status">
   <div class="row" style="justify-content: space-between">
     <h2 style="margin: 0">{{ e.group_name }}</h2>
     {% if e.status == 'pending' %}<span class="state-wait">Waiting for an admin</span>
@@ -44,9 +44,9 @@
     <p class="muted small">No SSH key or password: Tailscale checks that you are a member of the group, so every member signs in with their own BRACU account. Outside your slots the PC cannot be reached, and open sessions end when your slot does. Jobs still running then are stopped, so save checkpoints.</p>
 
   {% elif e.status == 'pending' %}
-    <p>We have your enrolment. You will see your PC and slots here once an admin assigns them, and every member gets an email.</p>
+    <p>We have your enrollment. You will see your PC and slots here once an admin assigns them, and every member gets an email.</p>
     {% if e.submitted_by == me %}
-    <form method="post" action="{{ base }}/enroll/{{ e.id }}/withdraw" onsubmit="return confirm('Withdraw this enrolment?')"><button class="btn small">Withdraw enrolment</button></form>
+    <form method="post" action="{{ base }}/enroll/{{ e.id }}/withdraw" onsubmit="return confirm('Withdraw this enrollment?')"><button class="btn small">Withdraw enrollment</button></form>
     {% endif %}
   {% elif e.status == 'rejected' and e.decision_note %}
     <div class="note">Reason: {{ e.decision_note }}</div>
@@ -68,7 +68,7 @@
 {% set fs = f.supervisors if f and f.supervisors else [] %}
 {% set suffix = '@' ~ student_domain %}
 <form method="post" action="{{ base }}/enroll" class="section enroll-form">
-  <h2>{{ 'Enrolment form' if not enrolments else 'Send a new enrolment' }}</h2>
+  <h2>{{ 'Enrollment form' if not enrollments else 'Send a new enrollment' }}</h2>
 
   <fieldset class="formpart" aria-labelledby="fp-thesis">
     <div class="formpart-head"><h3 id="fp-thesis">Thesis</h3></div>
@@ -137,7 +137,7 @@
   </fieldset>
 
   <div class="form-actions">
-    <button class="btn primary">Send enrolment</button>
+    <button class="btn primary">Send enrollment</button>
     <p class="hint">An admin reviews it and assigns your group a PC and weekly slots. This page shows the result.</p>
   </div>
 </form>

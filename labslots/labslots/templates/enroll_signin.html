@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Enrol a thesis group{% endblock %}
+{% block title %}Enroll a thesis group{% endblock %}
 {% block body %}
 <section class="signin">
-  <h1>Enrol your thesis group</h1>
+  <h1>Enroll your thesis group</h1>
   <p>Thesis groups get remote access to a lab PC in fixed weekly slots. Send your group's details here; an admin assigns your group a PC and its slots, and you see the result on this page.</p>
-  <p class="muted">Sign in with your BRACU Google account (<code>@g.bracu.ac.bd</code>). One member sends the enrolment for the whole group.</p>
+  <p class="muted">Sign in with your BRACU Google account (<code>@g.bracu.ac.bd</code>). One member sends the enrollment for the whole group.</p>
   {% if oidc %}
   <p><a class="btn primary" href="{{ base }}/login/google">Sign in with Google</a></p>
   {% else %}

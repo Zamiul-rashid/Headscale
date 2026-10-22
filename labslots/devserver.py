@@ -58,21 +58,21 @@ for i, (a, d) in enumerate((("booking-approved", "#12 Thesis C (example) on pc-4
                             ("pc-switch-error", "pc-25: switch to grp-thesis-a failed: connection timed out"),
                             ("login", ""))):
     db.audit("admin@g.bracu.ac.bd" if a != "policy-applied" and a != "pc-switch-error" else "scheduler", a, d)
-# enrolments (illustrative): two waiting, one enrolled for the demo student
-def _enrol(by, name, title, sup, hw, members, status="pending", gid=None):
+# enrollments (illustrative): two waiting, one enrolled for the demo student
+def _enroll(by, name, title, sup, hw, members, status="pending", gid=None):
     eid = db.x("INSERT INTO enrolments(submitted_by, submitted_at, group_name, thesis_title, supervisor, co_supervisor, "
                "hardware, status, group_id, decided_by, decided_at) VALUES (?, '2026-10-16T21:14:00', ?, ?, ?, '', ?, ?, ?, ?, ?)",
                (by, name, title, sup, hw, status, gid, "admin@g.bracu.ac.bd" if status != "pending" else None,
                 "2026-10-17T11:02:00" if status != "pending" else None))
     for i, (n, sid, em) in enumerate(members):
         db.x("INSERT INTO enrolment_members VALUES (?, ?, ?, ?, ?)", (eid, i, n, sid, em))
-_enrol("nusrat.j@g.bracu.ac.bd", "Bangla ASR (example)", "Low-resource Bangla speech recognition", "Dr. Example Supervisor",
+_enroll("nusrat.j@g.bracu.ac.bd", "Bangla ASR (example)", "Low-resource Bangla speech recognition", "Dr. Example Supervisor",
        "One GPU with 12 GB or more for training; about 200 GB of disk for audio datasets.",
        [("Nusrat Jahan", "21101231", "nusrat.j@g.bracu.ac.bd"), ("Tanvir Hasan", "21101245", "tanvir.h@g.bracu.ac.bd"),
         ("Farhan Kabir", "21101302", "farhan.k@g.bracu.ac.bd")])
-_enrol("arif.r@g.bracu.ac.bd", "Road Scene Vision (example)", "Lane detection on Dhaka traffic video", "Dr. Example Supervisor",
+_enroll("arif.r@g.bracu.ac.bd", "Road Scene Vision (example)", "Lane detection on Dhaka traffic video", "Dr. Example Supervisor",
        "GPU for inference only; 50 GB disk.", [("Arif Rahman", "21201011", "arif.r@g.bracu.ac.bd")])
-_enrol("a1.student@g.bracu.ac.bd", "Thesis A (example)", "Example thesis title", "Dr. Example Supervisor", "1 GPU",
+_enroll("a1.student@g.bracu.ac.bd", "Thesis A (example)", "Example thesis title", "Dr. Example Supervisor", "1 GPU",
        [("A One", "21100001", "a1.student@g.bracu.ac.bd"), ("A Two", "21100002", "a2.student@g.bracu.ac.bd")],
        status="approved", gid=gids[0])
 nodes = [Node(id="5", name="pc25", owner="", tags=["tag:pc25"], online=True, ips=["100.64.0.5"]),

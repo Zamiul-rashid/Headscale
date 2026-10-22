@@ -1,4 +1,4 @@
-"""Outgoing email for enrolment decisions. Off until SMTP settings are configured."""
+"""Outgoing email for enrollment decisions. Off until SMTP settings are configured."""
 
 from __future__ import annotations
 

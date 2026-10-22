@@ -98,7 +98,7 @@ def _fill(bg, fg=INK, bold=False) -> dict:
 def style_requests(meta: dict, rows: dict[str, list[list]], groups: list[dict], tabs: dict) -> list[dict]:
     """meta: spreadsheets.get with conditionalFormats/bandedRanges/protectedRanges.
     rows: current values per tab. groups: [{slug, short, color}] in Groups-tab order.
-    tabs: the tab names {"readme", "groups", "pcs", "terms", "admins", "problems", "enrolments", "routine": [..]}."""
+    tabs: the tab names {"readme", "groups", "pcs", "terms", "admins", "problems", "enrollments", "routine": [..]}."""
     reqs: list[dict] = []
     ids = {s["properties"]["title"]: s["properties"]["sheetId"] for s in meta.get("sheets", [])}
     # clear what an earlier run added, so this is repeatable
@@ -112,7 +112,7 @@ def style_requests(meta: dict, rows: dict[str, list[list]], groups: list[dict], 
                  for p in s.get("protectedRanges", []) if p.get("description") == SYSTEM_DESC}
 
     order = [tabs["readme"]] + tabs["routine"] + [tabs[k] for k in ("groups", "pcs", "terms", "admins",
-                                                                     "problems", "enrolments")]
+                                                                     "problems", "enrollments")]
     index = {t: i for i, t in enumerate(t for t in order if t in ids)}
 
     def n(tab):
@@ -120,7 +120,7 @@ def style_requests(meta: dict, rows: dict[str, list[list]], groups: list[dict], 
 
     # the first, plain build tinted whole header rows: clear everything right of each tab's columns
     widths = {tabs["groups"]: 6, tabs["pcs"]: 5, tabs["terms"]: 3, tabs["admins"]: 1, tabs["problems"]: 5,
-              tabs["enrolments"]: 11, **{t: 15 for t in tabs["routine"]}}
+              tabs["enrollments"]: 11, **{t: 15 for t in tabs["routine"]}}
     for t, ncols in widths.items():
         if t in ids:
             reqs.append(_cell(_range(ids[t], 0, 1000, ncols, 40), {"backgroundColorStyle": {"rgbColor": rgb("#ffffff")},
@@ -247,8 +247,8 @@ def style_requests(meta: dict, rows: dict[str, list[list]], groups: list[dict], 
         reqs.append(_cf(sid, _range(sid, 1, 1000, 2, 3), {"type": "NOT_BLANK"},
                         {"textFormat": {"foregroundColorStyle": {"rgbColor": rgb(RED)}, "bold": True}}, 1))
 
-    # Enrolments (system)
-    t = tabs["enrolments"]
+    # Enrollments (system)
+    t = tabs["enrollments"]
     if t in ids:
         sid = ids[t]
         reqs += [_props(sid, RULE_SOFT, index[t])] + _table(sid, 11, n(t), [44, 140, 100, 190, 280, 170, 150, 320,
@@ -264,7 +264,7 @@ def style_requests(meta: dict, rows: dict[str, list[list]], groups: list[dict], 
     _clamp(reqs, {s["properties"]["sheetId"]: s["properties"].get("gridProperties", {}) for s in meta.get("sheets", [])})
 
     # tabs only the system writes: warn before anyone edits them
-    for key in ("readme", "problems", "enrolments"):
+    for key in ("readme", "problems", "enrollments"):
         t = tabs[key]
         if t in ids and t not in protected:
             reqs.append({"addProtectedRange": {"protectedRange": {

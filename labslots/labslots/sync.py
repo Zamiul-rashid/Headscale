@@ -10,7 +10,7 @@ carries on from SQLite.
 
 The Sheet is built from SQLite on the first run (or on "Restore Sheet from
 backup"): one tab each for Groups, PCs, Terms and Admins, one Routine tab per
-term, plus Problems and Enrolments, which only the sync writes.
+term, plus Problems and Enrollments, which only the sync writes.
 """
 
 from __future__ import annotations
@@ -39,16 +39,17 @@ WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 SLOT_COLS = [(wd, half) for wd in range(7) for half in ("day", "night")]
 DEFAULT_COLOR = "#cfe2ff"
 
-README, GROUPS, PCS, TERMS, ADMINS, PROBLEMS, ENROLMENTS = (
-    "Read me", "Groups", "PCs", "Terms", "Admins", "Problems", "Enrolments")
+README, GROUPS, PCS, TERMS, ADMINS, PROBLEMS, ENROLLMENTS = (
+    "Read me", "Groups", "PCs", "Terms", "Admins", "Problems", "Enrollments")
 ROUTINE = "Routine "
+OLD_ENROLLMENTS = "Enrolments"  # the tab's earlier spelling; renamed on the next read
 HEADERS = {
     GROUPS: ["Code", "Name", "Short", "Colour", "Members (one email per line)", "Notes"],
     PCS: ["Name", "Tag", "Account switching", "Notes", "Server"],
     TERMS: ["Name", "Starts", "Ends"],
     ADMINS: ["Email"],
     PROBLEMS: ["Where", "Value", "Problem", "Enforcing instead", "Since"],
-    ENROLMENTS: ["#", "Sent", "Status", "Group", "Thesis", "Supervisor", "Co-supervisor", "Members",
+    ENROLLMENTS: ["#", "Sent", "Status", "Group", "Thesis", "Supervisor", "Co-supervisor", "Members",
                  "Hardware needs", "Decided by", "Note"],
 }
 ROUTINE_HEADER = ["PC"] + [f"{WEEKDAYS[wd]} {half}\n{'08–20' if half == 'day' else '20–08'}" for wd, half in SLOT_COLS]
@@ -81,7 +82,7 @@ README_TEXT = [
     ["Admins: who can use the admin website and reach every PC."],
     [""],
     ["Problems is written by the system: anything it could not use, and what it enforces instead."],
-    ["Enrolments is a copy of the website's enrolment queue. Edits there are overwritten."],
+    ["Enrollments is a copy of the website's enrollment queue. Edits there are overwritten."],
     ["Do not rename tabs or change header rows; a tab with a changed header is ignored until it is fixed."],
 ]
 
@@ -222,6 +223,10 @@ class Sync:
         rep = SyncReport(at=now_iso())
         try:
             ids = self.sheet.tab_ids()
+            if OLD_ENROLLMENTS in ids and ENROLLMENTS not in ids:
+                self.sheet.batch_update([{"updateSheetProperties": {
+                    "properties": {"sheetId": ids[OLD_ENROLLMENTS], "title": ENROLLMENTS}, "fields": "title"}}])
+                ids = self.sheet.tab_ids()
             if GROUPS not in ids:
                 self._build(ids, restore=False)
                 rep.seeded = True
@@ -598,7 +603,7 @@ class Sync:
 
     # -- keep the Sheet tidy ------------------------------------------------------------------
     def _tidy(self, ids: dict, data: dict, snap: Snapshot) -> None:
-        """Routine tab per term, a row per PC, the Problems list and the Enrolments copy."""
+        """Routine tab per term, a row per PC, the Problems list and the Enrollments copy."""
         pcs = self.db.pcs()
         shorts = {g["slug"]: g["short"] or short_code(g["slug"]) for g in self.db.groups()}
         fixes: dict = {}
@@ -643,7 +648,7 @@ class Sync:
             if missing:
                 self.sheet.write({a1(tab, len(rows), 0): [[p["name"]] for p in missing]})
         self._write_if_changed(PROBLEMS, self._problem_rows(snap.problems), "sheet_problems_sha")
-        self._write_if_changed(ENROLMENTS, self.enrolment_rows(), "sheet_enrolments_sha")
+        self._write_if_changed(ENROLLMENTS, self.enrollment_rows(), "sheet_enrolments_sha")
         try:
             self.style(data, None if added else ids)
             self.db.set_setting("sheet_style_error", "")
@@ -665,7 +670,7 @@ class Sync:
             return False
         meta = self.sheet.meta()
         reqs = style_requests(meta, data, groups, {"readme": README, "groups": GROUPS, "pcs": PCS, "terms": TERMS,
-                                                    "admins": ADMINS, "problems": PROBLEMS, "enrolments": ENROLMENTS,
+                                                    "admins": ADMINS, "problems": PROBLEMS, "enrollments": ENROLLMENTS,
                                                     "routine": routine})
         reqs.append(_validation(ids[PCS], 1, 2, 3, {"type": "ONE_OF_LIST", "values": [
             {"userEnteredValue": "Yes"}, {"userEnteredValue": "No"}]}) if PCS in ids else None)
@@ -692,10 +697,10 @@ class Sync:
             return [HEADERS[PROBLEMS], ["No problems: everything in the Sheet is being enforced."]]
         return [HEADERS[PROBLEMS]] + [[p.where, p.value, p.problem, p.instead, since[p.key()]] for p in problems]
 
-    def enrolment_rows(self) -> list[list]:
-        rows = [HEADERS[ENROLMENTS]]
+    def enrollment_rows(self) -> list[list]:
+        rows = [HEADERS[ENROLLMENTS]]
         for r in self.db.q("SELECT id FROM enrolments ORDER BY id"):
-            e = self.db.enrolment(r["id"])
+            e = self.db.enrollment(r["id"])
             sups = [f"{s['name']} · {s['email']}" if s["email"] else s["name"] for s in e["supervisors"]]
             rows.append([e["id"], e["submitted_at"].replace("T", " "), e["status"], e["group_name"], e["thesis_title"],
                          sups[0] if sups else e["supervisor"], "\n".join(sups[1:]),
@@ -724,7 +729,7 @@ class Sync:
         db = self.db
         terms, pcs = db.terms(), db.pcs()
         members = db.members()
-        tabs = [README, GROUPS, PCS, TERMS, ADMINS] + [routine_tab(t["name"]) for t in terms] + [PROBLEMS, ENROLMENTS]
+        tabs = [README, GROUPS, PCS, TERMS, ADMINS] + [routine_tab(t["name"]) for t in terms] + [PROBLEMS, ENROLLMENTS]
         new = [t for t in tabs if t not in ids]
         if new:
             self.sheet.batch_update([{"addSheet": {"properties": {"title": t}}} for t in new])
@@ -745,7 +750,7 @@ class Sync:
                                               db.server_of(p)] for p in pcs],
             a1(ADMINS, 0, 0): [HEADERS[ADMINS]] + [[a] for a in db.admins()],
             a1(PROBLEMS, 0, 0): [HEADERS[PROBLEMS], ["No problems yet."]],
-            a1(ENROLMENTS, 0, 0): self.enrolment_rows(),
+            a1(ENROLLMENTS, 0, 0): self.enrollment_rows(),
         }
         for t in terms:
             blocks[a1(routine_tab(t["name"]), 0, 0)] = self._routine_rows(t, pcs)

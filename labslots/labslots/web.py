@@ -38,7 +38,7 @@ class NeedLogin(Exception):
 
 
 def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None) -> FastAPI:
-    """The hub: enrolments, status and the Sheet sync. Enforcement runs in each server's slot agent."""
+    """The hub: enrollments, status and the Sheet sync. Enforcement runs in each server's slot agent."""
     db = db or DB(cfg.db_path)
     for email in cfg.bootstrap_admins:
         db.x("INSERT OR IGNORE INTO admins(email, added_at, added_by) VALUES (?, ?, 'bootstrap')",
@@ -124,7 +124,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         return email.rsplit("@", 1)[-1] in cfg.student_domains
 
     def viewer(request: Request) -> str:
-        """Any signed-in BRACU account or admin (enrolment pages)."""
+        """Any signed-in BRACU account or admin (enrollment pages)."""
         email = request.session.get("email", "")
         if not email or not (db.is_admin(email) or is_student_email(email)):
             raise NeedLogin()
@@ -175,7 +175,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
             return back("/")
         if is_student_email(email):
             request.session["email"] = email
-            db.audit(email, "login-student", "not on the admin list: sent to the enrolment page")
+            db.audit(email, "login-student", "not on the admin list: sent to the enrollment page")
             return back("/enroll")
         db.audit(email, "login-refused", "not an admin or BRACU account")
         flash(request, f"{email} cannot sign in here. Use your BRACU Google account.", "err")
@@ -237,6 +237,13 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
     async def folded(request: Request):
         admin(request)
         return back("/calendar")
+
+    @r.get("/enrolments")
+    @r.get("/enrolments/{eid}")
+    async def old_spelling(request: Request, eid: int | None = None):
+        """Links from before the spelling became "enrollment" (emails, bookmarks)."""
+        admin(request)
+        return back(f"/enrollments/{eid}" if eid else "/enrollments")
 
     # -- calendar view -------------------------------------------------------------------
     @r.get("/calendar", response_class=HTMLResponse)
@@ -418,7 +425,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
 
         mailer.send([who], "Test email from the lab PC slot system",
                     f"This is a test from {cfg.public_url}{base}/settings, sent at {who}'s request.\n\n"
-                    "If it arrived, enrolment decisions will reach students the same way.\n\nBRACU CSE Research Lab", done)
+                    "If it arrived, enrollment decisions will reach students the same way.\n\nBRACU CSE Research Lab", done)
         db.audit(who, "email-test", f"asked for a test email to {who}")
         flash(request, f"Sending a test email to {who}. Whether it was sent shows in the Log within a minute.")
         return back("/settings#email")
@@ -484,7 +491,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         admin(request)
         return page(request, "audit.html", rows=db.q("SELECT * FROM audit ORDER BY id DESC LIMIT 300"))
 
-    # -- enrolment: thesis groups apply, admins assign a PC and slots ---------------
+    # -- enrollment: thesis groups apply, admins assign a PC and slots ---------------
     STUDENT_ID_RE = re.compile(r"^\d{8}$")
     MIN_MEMBERS, MAX_MEMBERS = 1, 5   # a thesis group: one to five students
     MAX_SUPERVISORS = 3    # the supervisor and up to two co-supervisors
@@ -518,7 +525,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         to = sorted({m["email"] for m in e["members"]} | {e["submitted_by"]})
 
         def done(ok, detail):
-            db.audit("mailer", "email-sent" if ok else "email-error", f"enrolment #{e['id']}: {detail}")
+            db.audit("mailer", "email-sent" if ok else "email-error", f"enrollment #{e['id']}: {detail}")
 
         mailer.send(to, subject, body, done)
 
@@ -545,11 +552,11 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         email = request.session.get("email", "")
         if not email or not (db.is_admin(email) or is_student_email(email)):
             return page(request, "enroll_signin.html", oidc=oauth is not None, dev=cfg.dev_login)
-        mine = db.enrolments_for(email)
+        mine = db.enrollments_for(email)
         for e in mine:
             e["assignment"] = group_assignment(e["group_id"]) if e["status"] == "approved" and e["group_id"] else None
         active = [e for e in mine if e["status"] in ("pending", "approved")]
-        return page(request, "enroll.html", me=email, me_admin=db.is_admin(email), enrolments=mine, can_apply=not active,
+        return page(request, "enroll.html", me=email, me_admin=db.is_admin(email), enrollments=mine, can_apply=not active,
                     min_members=MIN_MEMBERS, max_members=MAX_MEMBERS, max_supervisors=MAX_SUPERVISORS,
                     student_domain=student_domain,
                     form=request.session.pop("enroll_form", None))
@@ -595,8 +602,8 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         for k, label in (("group_name", "group name"), ("thesis_title", "thesis title")):
             if not get(k):
                 errors.append(f"Give the {label}.")
-        if any(e["status"] in ("pending", "approved") for e in db.enrolments_for(email)):
-            errors.append("You already have an enrolment that is waiting or approved.")
+        if any(e["status"] in ("pending", "approved") for e in db.enrollments_for(email)):
+            errors.append("You already have an enrollment that is waiting or approved.")
         if errors:
             for msg in errors:
                 flash(request, msg, "err")
@@ -617,27 +624,27 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
                                 "VALUES (?, ?, ?, ?)", [(eid, i, s["name"][:120], s["email"][:200])
                                                       for i, s in enumerate(supervisors)])
         db.audit(email, "enrolment-submitted", f"#{eid} {get('group_name')} ({len(members)} members)")
-        flash(request, "Enrolment sent. An admin will assign your group a PC; this page shows the result.")
+        flash(request, "Enrollment sent. An admin will assign your group a PC; this page shows the result.")
         return back("/enroll")
 
     @r.post("/enroll/{eid}/withdraw")
     async def enroll_withdraw(request: Request, eid: int):
         email = viewer(request)
         same_origin(request)
-        e = db.enrolment(eid)
+        e = db.enrollment(eid)
         if e and e["submitted_by"] == email and e["status"] == "pending":
             db.x("UPDATE enrolments SET status = 'withdrawn', decided_by = ?, decided_at = ? WHERE id = ?",
                  (email, now_iso(), eid))
             db.audit(email, "enrolment-withdrawn", f"#{eid} {e['group_name']}")
-            flash(request, "Enrolment withdrawn. You can send a new one.")
+            flash(request, "Enrollment withdrawn. You can send a new one.")
         return back("/enroll")
 
-    @r.get("/enrolments", response_class=HTMLResponse)
-    async def enrolments_page(request: Request):
+    @r.get("/enrollments", response_class=HTMLResponse)
+    async def enrollments_page(request: Request):
         admin(request)
-        rows = [db.enrolment(r_["id"]) for r_ in db.q("SELECT id FROM enrolments ORDER BY "
+        rows = [db.enrollment(r_["id"]) for r_ in db.q("SELECT id FROM enrolments ORDER BY "
                                                       "status != 'pending', id DESC LIMIT 200")]
-        return page(request, "enrolments.html", pending=[e for e in rows if e["status"] == "pending"],
+        return page(request, "enrollments.html", pending=[e for e in rows if e["status"] == "pending"],
                     decided=[e for e in rows if e["status"] != "pending"][:40], mailer_on=mailer.enabled)
 
     def slot_picker_ctx(term_id: int | None, pc_id: int | None) -> dict:
@@ -649,34 +656,34 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
                 taken[(b["weekday"], b["half"])] = b
         return {"taken": taken, "picker_term": term_id, "picker_pc": pc_id}
 
-    @r.get("/enrolments/{eid}", response_class=HTMLResponse)
-    async def enrolment_page(request: Request, eid: int):
+    @r.get("/enrollments/{eid}", response_class=HTMLResponse)
+    async def enrollment_page(request: Request, eid: int):
         admin(request)
-        e = db.enrolment(eid)
+        e = db.enrollment(eid)
         if not e:
             raise HTTPException(404)
         t, terms = pick_term(None)
         pcs = db.pcs()
         slug = re.sub(r"[^a-z0-9]+", "-", e["group_name"].lower()).strip("-")[:26] or f"group-{eid}"
         assignment = group_assignment(e["group_id"]) if e["group_id"] else None
-        return page(request, "enrolment.html", e=e, terms=terms, term=t, pcs=pcs, suggested_slug=slug,
+        return page(request, "enrollment.html", e=e, terms=terms, term=t, pcs=pcs, suggested_slug=slug,
                     suggested_short=short_code(slug), assignment=assignment, mailer_on=mailer.enabled,
                     suggested_color=next_color([g["color"] for g in db.groups()]),
                     **slot_picker_ctx(t["id"] if t else None, pcs[0]["id"] if pcs else None))
 
-    @r.get("/enrolments/{eid}/slots", response_class=HTMLResponse)
-    async def enrolment_slots(request: Request, eid: int, term: int = 0, pc: int = 0):
+    @r.get("/enrollments/{eid}/slots", response_class=HTMLResponse)
+    async def enrollment_slots(request: Request, eid: int, term: int = 0, pc: int = 0):
         admin(request)
         return page(request, "_slot_picker.html", **slot_picker_ctx(term or None, pc or None))
 
-    @r.post("/enrolments/{eid}/approve")
-    async def enrolment_approve(request: Request, eid: int):
+    @r.post("/enrollments/{eid}/approve")
+    async def enrollment_approve(request: Request, eid: int):
         who = admin(request)
         same_origin(request)
-        e = db.enrolment(eid)
+        e = db.enrollment(eid)
         if not e or e["status"] != "pending":
-            flash(request, "This enrolment is no longer waiting.", "err")
-            return back("/enrolments")
+            flash(request, "This enrollment is no longer waiting.", "err")
+            return back("/enrollments")
         f = await request.form()
         slug = (f.get("slug") or "").strip().lower()
         short = (f.get("short") or "").strip().upper() or short_code(slug)
@@ -709,7 +716,7 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         if problems:
             for p_ in problems:
                 flash(request, p_, "err")
-            return back(f"/enrolments/{eid}")
+            return back(f"/enrollments/{eid}")
         # The Sheet is the source of truth: write there, then read it back.
         t_ = db.one("SELECT name FROM terms WHERE id = ?", (term_id,))["name"]
         tag_ = db.one("SELECT tag FROM pcs WHERE id = ?", (pc_id,))["tag"]
@@ -720,12 +727,12 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
             rep = await _in_thread(lambda: sync.assign(group_, t_, tag_, slots))
         except AssignError as err:
             flash(request, str(err), "err")
-            return back(f"/enrolments/{eid}")
+            return back(f"/enrollments/{eid}")
         row_ = db.one("SELECT id FROM groups WHERE slug = ?", (slug,))
         if not rep.ok or not row_:
             flash(request, "Written to the Sheet, but reading it back failed: " + (rep.error or "group missing")
                   + ". Check the Problems tab, then try again.", "err")
-            return back(f"/enrolments/{eid}")
+            return back(f"/enrollments/{eid}")
         gid = row_["id"]
         db.x("UPDATE enrolments SET status = 'approved', decided_by = ?, decided_at = ?, "
              "decision_note = ?, group_id = ? WHERE id = ?",
@@ -733,28 +740,28 @@ def create_app(cfg: Config, db: DB | None = None, clock=datetime.now, sheet=None
         pc_name = db.one("SELECT name FROM pcs WHERE id = ?", (pc_id,))["name"]
         db.audit(who, "enrolment-approved", f"#{eid} {e['group_name']} -> {pc_name}: "
                  + ", ".join(slot_text(*s_) for s_ in slots))
-        e = db.enrolment(eid)
+        e = db.enrollment(eid)
         notify(e, f"Enrolled: {e['group_name']} on {pc_name}", approval_email(e, group_assignment(gid)))
         flash(request, f"{e['group_name']} is enrolled on {pc_name} with {len(slots)} weekly slot(s)."
               + ("" if mailer.enabled else " Email is not configured, so tell the group to check their status page."))
-        return back(f"/enrolments/{eid}")
+        return back(f"/enrollments/{eid}")
 
-    @r.post("/enrolments/{eid}/reject")
-    async def enrolment_reject(request: Request, eid: int, note: str = Form("")):
+    @r.post("/enrollments/{eid}/reject")
+    async def enrollment_reject(request: Request, eid: int, note: str = Form("")):
         who = admin(request)
         same_origin(request)
-        e = db.enrolment(eid)
+        e = db.enrollment(eid)
         if not e or e["status"] != "pending":
-            return back("/enrolments")
+            return back("/enrollments")
         db.x("UPDATE enrolments SET status = 'rejected', decided_by = ?, decided_at = ?, decision_note = ? "
              "WHERE id = ?", (who, now_iso(), note.strip()[:500], eid))
         db.audit(who, "enrolment-rejected", f"#{eid} {e['group_name']}: {note.strip()[:200]}")
-        notify(e, f"Enrolment not approved: {e['group_name']}",
-               f"Your enrolment for \"{e['group_name']}\" was not approved.\n\n"
+        notify(e, f"Enrollment not approved: {e['group_name']}",
+               f"Your enrollment for \"{e['group_name']}\" was not approved.\n\n"
                + (f"Reason: {note.strip()}\n\n" if note.strip() else "")
-               + f"You can send a new enrolment at {cfg.public_url}{base}/enroll\n\nBRACU CSE Research Lab")
+               + f"You can send a new enrollment at {cfg.public_url}{base}/enroll\n\nBRACU CSE Research Lab")
         flash(request, f"Rejected {e['group_name']}.")
-        return back("/enrolments")
+        return back("/enrollments")
 
     # -- slot agents (one per Headscale server) ---------------------------------------
     def agent_server(request: Request) -> str:

@@ -47,14 +47,14 @@ def test_pages_render_for_admin(tmp_path):
                              "pc_state": {"1": {"active_account": "grp-thesis-a", "last_error": None}}})
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
     for path in ("/slots/", "/slots/calendar", "/slots/calendar?week=2026-10-26",
-                 "/slots/enrolments", "/slots/pcs",
+                 "/slots/enrollments", "/slots/pcs",
                  "/slots/terms", "/slots/settings", "/slots/audit", "/slots/pcs/setup-lab-pc.sh"):
         r = c.get(path)
         assert r.status_code == 200, path
     cal = c.get("/slots/calendar?week=2026-10-19").text
     assert "TH-A" in cal and "Edit in the Sheet" in cal
     nav = c.get("/slots/").text
-    assert all(f'>{x}<' in nav or f'>{x}<span' in nav for x in ("Now", "Calendar", "Enrolments", "PCs", "Semesters",
+    assert all(f'>{x}<' in nav or f'>{x}<span' in nav for x in ("Now", "Calendar", "Enrollments", "PCs", "Semesters",
                                                                "Settings", "Log"))
     assert ">Schedule<" not in nav and ">Groups<" not in nav
     for old in ("/slots/grid", "/slots/groups", "/slots/groups/1"):          # old links land on the Calendar
@@ -129,7 +129,7 @@ def test_enforce_now_asks_agents(tmp_path):
     assert db.setting("force_seq") == "1"
 
 
-ENROL = {"group_name": "Bangla ASR", "thesis_title": "Low-resource Bangla speech recognition",
+ENROLL = {"group_name": "Bangla ASR", "thesis_title": "Low-resource Bangla speech recognition",
          "s_name": ["Dr. Alam"], "s_email": ["alam@bracu.ac.bd"], "hardware": "1 GPU, 12 GB", "notes": "",
          "m_name": ["Rahim Uddin", "Karim Ali"], "m_id": ["21101001", "21101002"],
          "m_email": ["rahim@g.bracu.ac.bd", "karim"]}   # the form takes the part before @g.bracu.ac.bd
@@ -140,19 +140,19 @@ def test_student_enrols_and_cannot_see_admin_pages(tmp_path):
     assert "Sign in with Google" in c.get("/slots/enroll").text or "Dev sign-in" in c.get("/slots/enroll").text
     c.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
     assert c.get("/slots/grid", follow_redirects=False).status_code == 303   # admin pages stay closed
-    assert "Enrolment form" in c.get("/slots/enroll").text
-    r = c.post("/slots/enroll", data=ENROL, headers=ORIGIN, follow_redirects=False)
+    assert "Enrollment form" in c.get("/slots/enroll").text
+    r = c.post("/slots/enroll", data=ENROLL, headers=ORIGIN, follow_redirects=False)
     assert r.status_code == 303
-    e = db.enrolment(1)
+    e = db.enrollment(1)
     assert e["status"] == "pending" and [m["email"] for m in e["members"]] == ["rahim@g.bracu.ac.bd", "karim@g.bracu.ac.bd"]
     page = c.get("/slots/enroll").text
-    assert "Waiting for an admin" in page and "Enrolment form" not in page   # one active enrolment at a time
+    assert "Waiting for an admin" in page and "Enrollment form" not in page   # one active enrollment at a time
 
 
 def test_enrol_validation(tmp_path):
     c, db, _ = client(tmp_path)
     c.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
-    bad = dict(ENROL, m_id=["123", "21101002"], m_email=["someone@gmail.com", "karim@g.bracu.ac.bd"])
+    bad = dict(ENROLL, m_id=["123", "21101002"], m_email=["someone@gmail.com", "karim@g.bracu.ac.bd"])
     c.post("/slots/enroll", data=bad, headers=ORIGIN, follow_redirects=False)
     assert db.one("SELECT COUNT(*) AS n FROM enrolments")["n"] == 0
     page = c.get("/slots/enroll").text
@@ -165,17 +165,17 @@ def test_enrol_needs_g_suite_members_and_a_supervisor(tmp_path):
     c.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
     form = c.get("/slots/enroll").text
     assert form.count('name="m_name"') == 5 and "@g.bracu.ac.bd" in form and "Add co-supervisor" in form
-    for bad in (dict(ENROL, m_email=["rahim@g.bracu.ac.bd", "karim@bracu.ac.bd"]),    # staff domain, not a student
-                dict(ENROL, m_email=["rahim@g.bracu.ac.bd", "karim@gmail.com"]),      # personal address
-                dict(ENROL, s_name=[""], s_email=[""]),                               # no supervisor
-                dict(ENROL, s_name=["Dr. Alam"], s_email=["not-an-email"])):
+    for bad in (dict(ENROLL, m_email=["rahim@g.bracu.ac.bd", "karim@bracu.ac.bd"]),    # staff domain, not a student
+                dict(ENROLL, m_email=["rahim@g.bracu.ac.bd", "karim@gmail.com"]),      # personal address
+                dict(ENROLL, s_name=[""], s_email=[""]),                               # no supervisor
+                dict(ENROLL, s_name=["Dr. Alam"], s_email=["not-an-email"])):
         c.post("/slots/enroll", data=bad, headers=ORIGIN)
         assert db.one("SELECT COUNT(*) AS n FROM enrolments")["n"] == 0, bad
-    six = dict(ENROL, m_name=[f"S{i}" for i in range(6)], m_id=[f"2110100{i}" for i in range(6)],
+    six = dict(ENROLL, m_name=[f"S{i}" for i in range(6)], m_id=[f"2110100{i}" for i in range(6)],
                m_email=["rahim@g.bracu.ac.bd"] + [f"s{i}" for i in range(1, 6)])
     c.post("/slots/enroll", data=dict(six, s_name=["Dr. Alam", "Dr. Saif", ""], s_email=["alam@bracu.ac.bd", "saif@bracu.ac.bd", ""]),
            headers=ORIGIN)
-    e = db.enrolment(1)
+    e = db.enrollment(1)
     assert len(e["members"]) == 5                                         # a group is at most five
     assert e["members"][1]["email"] == "s1@g.bracu.ac.bd"
     assert e["supervisors"] == [{"name": "Dr. Alam", "email": "alam@bracu.ac.bd"},
@@ -184,12 +184,12 @@ def test_enrol_needs_g_suite_members_and_a_supervisor(tmp_path):
     assert "supervisors Dr. Alam, Dr. Saif" in c.get("/slots/enroll").text
 
 
-def test_personal_google_account_cannot_sign_in_to_enrol(tmp_path):
+def test_personal_google_account_cannot_sign_in_to_enroll(tmp_path):
     c, _, _ = client(tmp_path)
     c.get("/slots/dev-login?email=someone@gmail.com&next=/enroll")
-    assert "Enrolment form" not in c.get("/slots/enroll").text
+    assert "Enrollment form" not in c.get("/slots/enroll").text
     c.get("/slots/dev-login?email=lecturer@bracu.ac.bd&next=/enroll")       # staff, not a student
-    assert "Enrolment form" not in c.get("/slots/enroll").text
+    assert "Enrollment form" not in c.get("/slots/enroll").text
 
 
 def test_email_settings_and_test_email(tmp_path, monkeypatch):
@@ -214,21 +214,21 @@ def test_email_settings_and_test_email(tmp_path, monkeypatch):
     assert c2.app.state.db.one("SELECT 1 FROM audit WHERE action = 'email-test-sent'")
 
 
-def test_admin_approves_enrolment_into_the_sheet(tmp_path):
+def test_admin_approves_enrollment_into_the_sheet(tmp_path):
     c, db, sheet = client(tmp_path)
     s = TestClient(c.app)
     s.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
-    s.post("/slots/enroll", data=ENROL, headers=ORIGIN)
+    s.post("/slots/enroll", data=ENROLL, headers=ORIGIN)
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
-    assert "Bangla ASR" in c.get("/slots/enrolments").text and c.get("/slots/enrolments/1").status_code == 200
-    assert "TH-A" in c.get("/slots/enrolments/1/slots?term=1&pc=1").text
+    assert "Bangla ASR" in c.get("/slots/enrollments").text and c.get("/slots/enrollments/1").status_code == 200
+    assert "TH-A" in c.get("/slots/enrollments/1/slots?term=1&pc=1").text
     # Monday day on pc-41 is taken by Thesis A: refused
-    c.post("/slots/enrolments/1/approve", data={"slug": "bangla-asr", "short": "", "color": "#b8e6b0", "term": 1,
+    c.post("/slots/enrollments/1/approve", data={"slug": "bangla-asr", "short": "", "color": "#b8e6b0", "term": 1,
                                                 "pc": 1, "slot": ["0-day", "2-day"]}, headers=ORIGIN)
-    assert db.enrolment(1)["status"] == "pending"
-    c.post("/slots/enrolments/1/approve", data={"slug": "bangla-asr", "short": "", "color": "#b8e6b0", "term": 1,
+    assert db.enrollment(1)["status"] == "pending"
+    c.post("/slots/enrollments/1/approve", data={"slug": "bangla-asr", "short": "", "color": "#b8e6b0", "term": 1,
                                                 "pc": 2, "slot": ["2-day", "4-night"]}, headers=ORIGIN)
-    e = db.enrolment(1)
+    e = db.enrollment(1)
     assert e["status"] == "approved" and e["group_id"]
     g = db.one("SELECT * FROM groups WHERE id = ?", (e["group_id"],))
     assert g["linux_account"] == "grp-bangla-asr" and g["short"] == "BA-ASR"
@@ -244,9 +244,9 @@ def test_no_student_keys_and_reject_flow(tmp_path):
     ids = {"p2": 2}
     s = TestClient(c.app)
     s.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
-    s.post("/slots/enroll", data=ENROL, headers=ORIGIN)
+    s.post("/slots/enroll", data=ENROLL, headers=ORIGIN)
     c.get("/slots/dev-login?email=boss@bracu.ac.bd")
-    c.post("/slots/enrolments/1/approve", data={"slug": "bangla-asr", "term": 1, "pc": ids["p2"], "slot": ["0-day"]},
+    c.post("/slots/enrollments/1/approve", data={"slug": "bangla-asr", "term": 1, "pc": ids["p2"], "slot": ["0-day"]},
            headers=ORIGIN)
     # Tailscale SSH checks the tailnet identity: there is nowhere to upload keys
     assert s.post("/slots/enroll/1/keys", data={"ssh_keys": "ssh-ed25519 AAAAC3Nza rahim@laptop"},
@@ -255,12 +255,12 @@ def test_no_student_keys_and_reject_flow(tmp_path):
     # a second group gets rejected with a reason the student can read
     t = TestClient(c.app)
     t.get("/slots/dev-login?email=nadia@g.bracu.ac.bd&next=/enroll")
-    t.post("/slots/enroll", data=dict(ENROL, group_name="Vision", m_name=["Nadia", "Tanvir"], m_id=["21101009", "21101010"],
+    t.post("/slots/enroll", data=dict(ENROLL, group_name="Vision", m_name=["Nadia", "Tanvir"], m_id=["21101009", "21101010"],
                                       m_email=["nadia@g.bracu.ac.bd", "tanvir"]), headers=ORIGIN)
-    c.post("/slots/enrolments/2/reject", data={"note": "Ask your supervisor to confirm"}, headers=ORIGIN)
-    assert db.enrolment(2)["status"] == "rejected"
+    c.post("/slots/enrollments/2/reject", data={"note": "Ask your supervisor to confirm"}, headers=ORIGIN)
+    assert db.enrollment(2)["status"] == "rejected"
     page = t.get("/slots/enroll").text
-    assert "Not approved" in page and "Ask your supervisor to confirm" in page and "Send a new enrolment" in page
+    assert "Not approved" in page and "Ask your supervisor to confirm" in page and "Send a new enrollment" in page
 
 
 def test_google_client_signs_in_and_reads(tmp_path):
@@ -369,13 +369,22 @@ def test_groups_of_one_to_five(tmp_path):
     c.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
     form = c.get("/slots/enroll").text
     assert "Up to 5 members" in form and form.count("placeholder=Optional") == 4   # rows 2 to 5
-    three = dict(ENROL, m_name=["Rahim Uddin", "Karim Ali", "Nadia Islam", "", ""],
+    three = dict(ENROLL, m_name=["Rahim Uddin", "Karim Ali", "Nadia Islam", "", ""],
                  m_id=["21101001", "21101002", "21101003", "", ""], m_email=["rahim@g.bracu.ac.bd", "karim", "nadia", "", ""])
     c.post("/slots/enroll", data=three, headers=ORIGIN)
-    assert len(db.enrolment(1)["members"]) == 3                       # empty rows are simply left out
+    assert len(db.enrollment(1)["members"]) == 3                       # empty rows are simply left out
     (tmp_path / "solo").mkdir()
     c2, db2, _ = client(tmp_path / "solo")
     c2.get("/slots/dev-login?email=rahim@g.bracu.ac.bd&next=/enroll")
-    c2.post("/slots/enroll", data=dict(ENROL, m_name=["Rahim Uddin"], m_id=["21101001"], m_email=["rahim@g.bracu.ac.bd"]),
+    c2.post("/slots/enroll", data=dict(ENROLL, m_name=["Rahim Uddin"], m_id=["21101001"], m_email=["rahim@g.bracu.ac.bd"]),
             headers=ORIGIN)
-    assert [m["email"] for m in db2.enrolment(1)["members"]] == ["rahim@g.bracu.ac.bd"]   # working alone
+    assert [m["email"] for m in db2.enrollment(1)["members"]] == ["rahim@g.bracu.ac.bd"]   # working alone
+
+
+def test_old_enrolments_links_still_work(tmp_path):
+    c, _, _ = client(tmp_path)
+    c.get("/slots/dev-login?email=boss@bracu.ac.bd")
+    assert c.get("/slots/enrolments", follow_redirects=False).headers["location"] == "/slots/enrollments"
+    assert c.get("/slots/enrolments/3", follow_redirects=False).headers["location"] == "/slots/enrollments/3"
+    page = c.get("/slots/enrollments").text
+    assert "Enrollments" in page and "Enrolment" not in page

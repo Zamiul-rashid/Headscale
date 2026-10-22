@@ -279,7 +279,7 @@ td.cell.noterm { background-image: repeating-linear-gradient(135deg, transparent
 .subtle-list { margin: 0; padding-left: var(--s5); }
 .subtle-list li { margin: 2px 0; }
 
-/* ---------- enrolment ---------- */
+/* ---------- enrollment ---------- */
 .assignment { display: grid; grid-template-columns: minmax(160px, 220px) 1fr; gap: var(--s4) var(--s6); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--s4); margin: var(--s4) 0; }
 .assign-pc { display: flex; flex-direction: column; gap: 2px; border-right: 2px solid var(--rule); padding-right: var(--s4); }
 .assign-pc b { font-size: var(--t-2xl); line-height: 1.2; }
@@ -297,7 +297,7 @@ details.members summary { cursor: pointer; font-weight: 600; color: var(--blue);
 details.members .sheet { margin-top: var(--s2); border: 1px solid var(--rule-soft); border-radius: var(--radius); }
 fieldset.memberset { border: 0; padding: 0; margin: 0; min-width: 0; }
 fieldset.memberset legend { font-weight: 700; font-size: var(--t-sm); padding: 0; margin-bottom: var(--s1); }
-/* enrolment form: each part has its heading and hint on the left, its fields on the right */
+/* enrollment form: each part has its heading and hint on the left, its fields on the right */
 .enroll-form { max-width: 960px; }
 .formpart { border: 0; margin: 0; padding: var(--s5) 0; min-width: 0; border-top: 1px solid var(--rule-soft);
   display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--s3) var(--s6); }

@@ -1,5 +1,5 @@
 # Deployed in CT 101 at /opt/labslots, next to Headscale (a systemd service on this host).
-#   labslots        the hub: website, enrolments, Google Sheet sync          (:3100, behind the proxy)
+#   labslots        the hub: website, enrollments, Google Sheet sync          (:3100, behind the proxy)
 #   labslots-agent  enforces the schedule on this server's Headscale (hs1)
 #   ts-scheduler    the agent's way onto the tailnet, to SSH to lab PCs
 #   backup          nightly copies of the three SQLite databases
@@ -27,7 +27,7 @@ services:
       LABSLOTS_BOOTSTRAP_ADMINS: "${LABSLOTS_BOOTSTRAP_ADMINS}"
       OIDC_ISSUER: "https://accounts.google.com"
       GOOGLE_OAUTH_CLIENT_FILE: "/run/secrets/google-oauth-client.json"   # website sign-in, as downloaded
-      # Outgoing email for enrolment decisions; off while SMTP_HOST/SMTP_FROM are empty.
+      # Outgoing email for enrollment decisions; off while SMTP_HOST/SMTP_FROM are empty.
       SMTP_HOST: "${SMTP_HOST:-}"
       SMTP_PORT: "${SMTP_PORT:-587}"
       SMTP_USER: "${SMTP_USER:-}"

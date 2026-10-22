@@ -93,7 +93,7 @@
 <section class="section" id="email" style="margin-top: var(--s8)">
   <h2>Email</h2>
   {% if mail.on %}
-  <p class="muted" style="max-width: 75ch">Enrolment decisions are emailed to every member of the group. Sent from <code>{{ mail.sender }}</code> through <code>{{ mail.host }}:{{ mail.port }}</code>{% if mail.user %} as <code>{{ mail.user }}</code>{% endif %}. Each send and failure is in the <a href="{{ base }}/audit">Log</a>.</p>
+  <p class="muted" style="max-width: 75ch">Enrollment decisions are emailed to every member of the group. Sent from <code>{{ mail.sender }}</code> through <code>{{ mail.host }}:{{ mail.port }}</code>{% if mail.user %} as <code>{{ mail.user }}</code>{% endif %}. Each send and failure is in the <a href="{{ base }}/audit">Log</a>.</p>
   <form method="post" action="{{ base }}/settings/email-test"><button class="btn">Send a test email to {{ user }}</button></form>
   {% else %}
   <div class="note warn">Email is off. Groups still see each decision on their status page.</div>
