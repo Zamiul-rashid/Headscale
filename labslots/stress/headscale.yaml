@@ -1,6 +1,6 @@
 # Headscale for the stress lab: same version and database settings as production, but self-contained:
 # its own TLS (a test CA), its own embedded DERP relay, no OIDC, no outside DERP servers.
-server_url: https://hs-stress.test:8443
+server_url: https://__FRONT__:8443   # the address every device uses (setup.sh)
 listen_addr: 0.0.0.0:8443
 metrics_listen_addr: 0.0.0.0:9090
 grpc_listen_addr: 127.0.0.1:50443
@@ -20,7 +20,7 @@ derp:
     stun_listen_addr: 0.0.0.0:3478
     private_key_path: /var/lib/headscale/derp_server_private.key
     automatically_add_embedded_derp_region: true
-    ipv4: __CT_IP__
+    ipv4: __FRONT__
   urls: []
   paths: []
   auto_update_enabled: false

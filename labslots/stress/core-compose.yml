@@ -20,7 +20,7 @@ services:
     environment:
       AGENT_HUB_URL: "http://127.0.0.1:3100/slots"
       AGENT_TOKEN_FILE: "/run/secrets/agent_token"
-      HEADSCALE_URL: "https://hs-stress.test:8443"
+      HEADSCALE_URL: "https://127.0.0.1:8443"
       HEADSCALE_API_KEY_FILE: "/run/secrets/headscale_api_key"
       LABSLOTS_SSH_SOCKS: "127.0.0.1:1055"
       SSL_CERT_FILE: "/certs/ca.crt"
@@ -37,7 +37,7 @@ services:
       TS_ACCEPT_DNS: "false"
       TS_HOSTNAME: "lab-scheduler"
       TS_AUTHKEY: "file:/run/secrets/ts_authkey"
-      TS_EXTRA_ARGS: "--login-server=https://hs-stress.test:8443"
-      TS_TAILSCALED_EXTRA_ARGS: "--port=41642"
+      TS_EXTRA_ARGS: "--login-server=https://127.0.0.1:8443"
+      TS_TAILSCALED_EXTRA_ARGS: "--port=41642 --no-logs-no-support"
       SSL_CERT_FILE: "/certs/ca.crt"
     volumes: [./ts-state:/var/lib/tailscale, ./secrets/tailscale:/run/secrets:ro, ./certs:/certs:ro]
