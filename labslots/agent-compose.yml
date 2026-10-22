@@ -5,7 +5,10 @@
 #   2. A Headscale API key for this server in ./secrets/agent/headscale_api_key (`headscale apikeys create`),
 #      same owner.
 #   3. A pre-auth key for tag:scheduler on this server in ./secrets/tailscale/ts_authkey, for the sidecar.
-#   4. Copy the labslots source here and `docker compose -f agent-compose.yml up -d --build`.
+#   4. Copy this file here, set the release in .env and start it (no source code needed):
+#        echo LABSLOTS_IMAGE=ghcr.io/zamiul-rashid/labslots:0.1.0 > .env
+#        docker compose -f agent-compose.yml up -d
+#      To upgrade, change the version in .env and run the same `up -d`; to roll back, put the old one back.
 #   5. In the Sheet's PCs tab, set Server = hs2 for this server's PCs. Prepare each PC with the
 #      setup script from the website's PCs page ("setup-lab-pc.sh for hs2").
 x-logging: &logging
@@ -14,8 +17,7 @@ x-logging: &logging
 
 services:
   labslots-agent:
-    build: .
-    image: labslots:local
+    image: ${LABSLOTS_IMAGE:-ghcr.io/zamiul-rashid/labslots:latest}
     container_name: labslots-agent
     restart: unless-stopped
     network_mode: host

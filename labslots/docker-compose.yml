@@ -3,7 +3,9 @@
 #   labslots-agent  enforces the schedule on this server's Headscale (hs1)
 #   ts-scheduler    the agent's way onto the tailnet, to SSH to lab PCs
 #   backup          nightly copies of the three SQLite databases
-# Deploy with ./deploy.sh (versioned images, health-checked, rolls back on failure).
+# Headscale itself is not in this file: it is installed from the official .deb and runs on the host.
+# The image is a labslots release from GitHub (ghcr.io/zamiul-rashid/labslots:<version>); the one in use
+# is LABSLOTS_IMAGE in .env. Deploy with ./deploy.sh (health-checked, rolls back on failure).
 # Other Headscale servers run agent-compose.yml.
 
 x-logging: &logging
@@ -11,7 +13,7 @@ x-logging: &logging
   options: {max-size: "10m", max-file: "3"}
 
 x-app: &app
-  image: labslots:${LABSLOTS_TAG:-local}
+  image: ${LABSLOTS_IMAGE:-ghcr.io/zamiul-rashid/labslots:latest}
   restart: unless-stopped
   network_mode: host
   logging: *logging
@@ -19,7 +21,6 @@ x-app: &app
 services:
   labslots:
     <<: *app
-    build: .
     container_name: labslots
     environment:
       LABSLOTS_PUBLIC_URL: "https://hs.zamiulrashid.online"

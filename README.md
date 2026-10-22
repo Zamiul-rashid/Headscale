@@ -37,11 +37,13 @@ labslots/                    the slot system (Python 3.11+, FastAPI, SQLite)
     templates/, static/      Jinja pages, stylesheet, htmx
   tests/                     pytest suite
   stress/                    load tests: run.py (one host), scale.py (several hosts), results/
+  Dockerfile                 the labslots image, published as ghcr.io/zamiul-rashid/labslots
   docker-compose.yml         hub, slot agent, scheduler sidecar and backup, next to Headscale
   agent-compose.yml          slot agent for an additional Headscale server
-  deploy.sh                  build, switch, health-check, roll back
+  deploy.sh                  pull a release (or build), switch, health-check, roll back
   devserver.py               local demo with illustrative data (devserver_scale.py: 70 PCs)
 headscale/                   production Headscale and Headplane configuration (secrets referenced by path)
+.github/workflows/           ci.yml: tests and image build; release.yml: image and GitHub release per tag
 proposal/                    pilot proposal: LaTeX source, PDF, earlier Markdown draft (under revision)
 records/                     record of the 2026-10-13 home-lab rehearsal of the pilot
 PRODUCT.md, DESIGN.md        product brief and design system for the web UI
@@ -57,15 +59,55 @@ env -u PYTHONPATH .venv/bin/python devserver.py
 # http://127.0.0.1:8765/slots/dev-login?email=admin@g.bracu.ac.bd
 ```
 
+## What runs where
+
+| Part | How it runs |
+|---|---|
+| Headscale | **On the host, not in Docker**: the official `.deb` from Headscale's GitHub releases, version pinned, as the `headscale` systemd service. Config in `/etc/headscale/` (see `headscale/headscale-config.yaml`), data in `/var/lib/headscale/`. Upgrade it by hand with the next `.deb`, after reading Headscale's upgrade notes. |
+| labslots hub, slot agent, backup | Docker, from the published image `ghcr.io/zamiul-rashid/labslots:<version>` (`labslots/docker-compose.yml`) |
+| Scheduler node (`ts-scheduler`) | Docker, the upstream `tailscale/tailscale` image, pinned in the compose files |
+| Headplane | Docker, the upstream `ghcr.io/tale/headplane` image (`headscale/headplane-config-and-compose.yaml`); reads Headscale's config read-only and never restarts it |
+
+All containers use host networking and reach Headscale at `127.0.0.1:8080`. Headscale is never in a
+container in production, and no release contains it; the backup service only reads its database. (The
+load tests in `labslots/stress/` start a throwaway Headscale in Docker on a test host, for tests only.)
+
+## Releases
+
+Each release of labslots is a Docker image and a GitHub release with the same version number:
+
+- `ghcr.io/zamiul-rashid/labslots:<X.Y.Z>`, plus `:<X.Y>` and `:latest`, for `linux/amd64` and `linux/arm64`;
+- a release on the [Releases page](https://github.com/Zamiul-rashid/Headscale/releases) saying which image
+  to deploy, with the changes since the last one.
+
+To make one: set `version` in `labslots/pyproject.toml`, commit, then tag and push the tag:
+
+```sh
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+`.github/workflows/release.yml` checks the tag matches `pyproject.toml`, runs the tests, builds and pushes
+the image and writes the release. `ci.yml` runs the tests and an image build on every push and pull request
+but publishes nothing. The running version shows at `/slots/healthz`.
+
 ## Deployment
 
-**Hub and first agent:** on the Headscale host, in `/opt/labslots`. Secrets go in `secrets/<service>/`;
-the comments at the end of `docker-compose.yml` list each file. `./deploy.sh` builds a tagged image,
-switches to it and rolls back if the health checks fail. `./deploy.sh rollback` and `./deploy.sh status`
-do what they say.
+**Hub and first agent:** on the Headscale host, in `/opt/labslots`, with `docker-compose.yml` and
+`deploy.sh` from this repo. Secrets go in `secrets/<service>/`; the comments at the end of
+`docker-compose.yml` list each file.
 
-**More Headscale servers:** register the server under Settings → Headscale servers, then follow the steps
-at the top of `agent-compose.yml`.
+```sh
+./deploy.sh 0.2.0      # pull that release, switch to it, roll back if the health checks fail
+./deploy.sh rollback   # back to the image that ran before
+./deploy.sh status     # running image, kept images, container health, last backup
+./deploy.sh build      # build from the source in this folder instead (unreleased code)
+```
+
+The image in use is `LABSLOTS_IMAGE` in `.env`; `deploy.sh` keeps it and the previous one there.
+
+**More Headscale servers:** Headscale is installed there the same way (`.deb`, systemd). Register the
+server under Settings → Headscale servers, then follow the steps at the top of `agent-compose.yml`. It
+needs only that file and a release version in `.env`, not the source.
 
 **Lab PCs:**
 1. Join the PC to Headscale with its `tag:pc-N` pre-auth key.
