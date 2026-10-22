@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Your thesis group{% endblock %}
+{% block body %}
+<div class="pagehead">
+  <div>
+    <h1>{{ 'Enrol your thesis group' if can_apply and not enrolments else 'Your thesis group' }}</h1>
+    <p>Signed in as {{ me }}. An admin assigns each enrolled group a lab PC and its weekly slots.</p>
+    {% if me_admin %}<p class="small"><a href="{{ base }}/">Open the admin desk</a></p>
+    {% else %}<p class="muted small">Lab admin? {{ me }} is not on the admin list. Sign out, then sign in with your admin Google account.</p>{% endif %}
+  </div>
+</div>
+
+{% for e in enrolments %}
+<section class="section enrolment-status">
+  <div class="row" style="justify-content: space-between">
+    <h2 style="margin: 0">{{ e.group_name }}</h2>
+    {% if e.status == 'pending' %}<span class="state-wait">Waiting for an admin</span>
+    {% elif e.status == 'approved' %}<span class="state-ok">Enrolled</span>
+    {% elif e.status == 'rejected' %}<span class="state-bad">Not approved</span>
+    {% else %}<span class="muted">Withdrawn</span>{% endif %}
+  </div>
+  <p class="muted small">Sent {{ e.submitted_at.replace('T', ' ') }} by {{ e.submitted_by }} · {{ e.thesis_title }} · supervisor {{ e.supervisor }}{% if e.co_supervisor %}, co-supervisor {{ e.co_supervisor }}{% endif %}</p>
+
+  {% if e.status == 'approved' and e.assignment %}
+    {% set a = e.assignment %}
+    {% for pc in a.pcs %}
+    <div class="assignment">
+      <div class="assign-pc"><span class="hint">Your PC</span><b>{{ pc.name }}</b>{% if pc.address %}<code>{{ pc.address }}</code>{% endif %}</div>
+      <div>
+        <span class="hint">Weekly slots · {{ pc.term }}, {{ pc.dates }}</span>
+        <ul class="slot-list">{% for sl in pc.slots %}<li>{{ sl }}</li>{% endfor %}</ul>
+      </div>
+    </div>
+    {% else %}
+    <div class="note warn">Your group is enrolled but has no slots yet. An admin will add them.</div>
+    {% endfor %}
+
+    <h3>How to connect</h3>
+    <ol class="steps">
+      <li>Install Tailscale on your laptop: <a href="https://tailscale.com/download" rel="noopener">tailscale.com/download</a>.</li>
+      <li>Run <code>tailscale login --login-server https://hs.zamiulrashid.online</code> and sign in with your BRACU Google account.</li>
+      <li>During one of your slots: <code>ssh {{ a.group.linux_account if a.group else 'your-group-account' }}@{{ a.pcs[0].address if a.pcs|length == 1 and a.pcs[0].address else '&lt;your PC address above&gt;'|safe }}</code></li>
+    </ol>
+    <p class="muted small">No SSH key or password: Tailscale checks that you are a member of the group, so every member signs in with their own BRACU account. Outside your slots the PC cannot be reached, and open sessions end when your slot does. Jobs still running then are stopped, so save checkpoints.</p>
+
+  {% elif e.status == 'pending' %}
+    <p>We have your enrolment. You will see your PC and slots here once an admin assigns them, and every member gets an email.</p>
+    {% if e.submitted_by == me %}
+    <form method="post" action="{{ base }}/enroll/{{ e.id }}/withdraw" onsubmit="return confirm('Withdraw this enrolment?')"><button class="btn small">Withdraw enrolment</button></form>
+    {% endif %}
+  {% elif e.status == 'rejected' and e.decision_note %}
+    <div class="note">Reason: {{ e.decision_note }}</div>
+  {% endif %}
+
+  <details class="members">
+    <summary>Members ({{ e.members|length }})</summary>
+    <table class="sheet list">
+      <thead><tr><th scope="col">Name</th><th scope="col">Student ID</th><th scope="col">Email</th></tr></thead>
+      <tbody>{% for m in e.members %}<tr><td>{{ m.name }}</td><td data-label="ID">{{ m.student_id }}</td><td data-label="Email">{{ m.email }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </details>
+</section>
+{% endfor %}
+
+{% if can_apply %}
+{% set f = form or {} %}
+{% set fm = f.members if f and f.members else [] %}
+<form method="post" action="{{ base }}/enroll" class="section stack enroll-form">
+  <h2>{{ 'Enrolment form' if not enrolments else 'Send a new enrolment' }}</h2>
+  <div class="fields top">
+    <label>Group name <input name="group_name" required maxlength="120" value="{{ f.group_name }}" placeholder="e.g. Bangla speech recognition"></label>
+    <label>Thesis title <input name="thesis_title" required maxlength="300" value="{{ f.thesis_title }}"></label>
+  </div>
+  <div class="fields top">
+    <label>Supervisor <input name="supervisor" required maxlength="120" value="{{ f.supervisor }}"></label>
+    <label>Co-supervisor <input name="co_supervisor" maxlength="120" value="{{ f.co_supervisor }}" placeholder="Optional"></label>
+  </div>
+
+  <fieldset class="memberset">
+    <legend>Members</legend>
+    <p class="hint">Up to {{ max_members }} members, including you. Each member uses their own BRACU email to sign in to the lab network.</p>
+    <table class="sheet member-table">
+      <thead><tr><th scope="col">#</th><th scope="col">Full name</th><th scope="col">Student ID</th><th scope="col">BRACU email</th></tr></thead>
+      <tbody>
+      {% for i in range(max_members) %}{% set m = fm[i] if i < fm|length else {} %}
+      <tr>
+        <td class="muted">{{ i + 1 }}</td>
+        <td><label class="visually-hidden" for="mn{{ i }}">Member {{ i + 1 }} name</label><input id="mn{{ i }}" name="m_name" class="cellinput" value="{{ m.name }}" {{ 'required' if i == 0 }} autocomplete="{{ 'name' if i == 0 else 'off' }}"></td>
+        <td><label class="visually-hidden" for="mi{{ i }}">Member {{ i + 1 }} student ID</label><input id="mi{{ i }}" name="m_id" class="cellinput" value="{{ m.student_id }}" inputmode="numeric" pattern="\d{8}" maxlength="8" placeholder="8 digits" {{ 'required' if i == 0 }}></td>
+        <td><label class="visually-hidden" for="me{{ i }}">Member {{ i + 1 }} email</label><input id="me{{ i }}" name="m_email" type="email" class="cellinput" value="{{ m.email if m else (me if i == 0 else '') }}" {{ 'required readonly' if i == 0 }} placeholder="name@g.bracu.ac.bd"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </fieldset>
+
+  <label>Hardware needs <textarea name="hardware" rows="3" maxlength="1000" placeholder="e.g. one GPU with 12 GB+ memory for training, about 200 GB of disk for datasets">{{ f.hardware }}</textarea>
+    <small>What your work needs from the PC: GPU and memory, RAM, disk, and the kind of workload.</small></label>
+  <label>Anything else <textarea name="notes" rows="2" maxlength="1000" placeholder="Optional">{{ f.notes }}</textarea></label>
+  <div><button class="btn primary">Send enrolment</button></div>
+</form>
+{% endif %}
+{% endblock %}
